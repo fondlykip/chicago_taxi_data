@@ -1,0 +1,3 @@
+CREATE DATABASE chicago_taxi_trips_staging;
+
+CREATE DATABASE chicago_taxi_trips;

@@ -1,0 +1,79 @@
+version: '3.8'
+services: 
+  airflow_meta_db:
+    image: postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - META_DB=airflow
+    container_name: airflow_meta_db
+    networks:
+      - ctdnet
+
+  airflow_scheduler:
+    build: .
+    command: scheduler
+    depends_on:
+      - airflow_webserver
+    env_file:
+      - .env
+    volumes:
+      - ${PWD}/airflow/dags:/opt/airflow/dags
+      - ${PWD}/airflow/logs:/opt/airflow/logs
+    container_name: airflow_scheduler
+    networks:
+      - ctdnet
+
+  airflow_webserver:
+    image: apache/airflow
+    entrypoint: ./scripts/entrypoint.sh
+    depends_on:
+      - airflow_meta_db
+    env_file:
+      - .env
+    volumes:
+      - ${PWD}/airflow/dags:/opt/airflow/dags
+      - ${PWD}/airflow/logs:/opt/airflow/logs
+      - ${PWD}/airflow/scripts:/opt/airflow/scripts
+    ports:
+      - "8080:8080"
+    container_name: airflow_webserver
+    networks:
+      - ctdnet
+
+  
+  postgres_db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - ${PWD}/data/postgres/data:/var/lib/postgres/data
+      - ${PWD}/data/postgres/scripts:/var/lib/postgres/scripts
+      - ${PWD}/data/postgres/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgres_db
+    networks:
+      - ctdnet
+  
+  mongo_db:
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpassword
+      - MONGO_INITDB_DATABASE=chicago_taxi_trips
+    ports:
+      - "27017:27017"
+    volumes:
+      - ${PWD}/data/mongo/data:/data/db
+      - ${PWD}/data/mongo/scripts:/scripts
+    container_name: mongo_db
+    networks:
+      - ctdnet
+  
+networks:
+  ctdnet:
+    driver: bridge
+
+

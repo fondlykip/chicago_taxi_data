@@ -1,0 +1,4 @@
+data/mongo/data
+data/postgres/data
+airflow/logs/
+test.csv
