@@ -7,7 +7,7 @@ from airflow.decorators import dag, task
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.mongo.hooks.mongo import MongoHook
 
-from etl_tasks import clear_down_processed_files_task
+from etl_tasks import clear_down_processed_files_task, load_taxi_trips_mongo_task
 
 
 LOGGER = logging.getLogger(__name__)
@@ -85,6 +85,37 @@ def test_mongo_db_pipeline():
         mongo_hook = MongoHook(conn_id='mongo_prd')
         mongo_hook.get_collection("system.users", 'local')    
     
-    print_mongo_conn()
-test_mongo_db_pipeline()
+    @task
+    def test_json_task():
+        import pandas as pd
+        import json
+        data = [{'a':1, 'b':"{'content':[0.1,0.2],'type':'Point'}", 'c':'2023-02-01T00:00:00.000'},
+                {'a':2, 'b':"{'content':[0.3,0.4],'type':'Point'}", 'c':'2023-10-05T00:00:00.000'}]
+        test_df = pd.DataFrame(data=data)
+        test_df.set_index('a')
+        LOGGER.info(f'test data: {test_df}')
+        LOGGER.info(f'test data types: {test_df.dtypes}')
+        records = test_df.to_dict(orient='records')
+        for record in records:
+            record['b'] = json.loads(str(record['b']).replace("'", '"'))
+        LOGGER.info(f'dict Obj: {records}')
         
+        mongo_hook = MongoHook(conn_id='mongo_prd')
+        client = mongo_hook.get_conn()
+        db = client.test_db
+        test_collection = db.test_collection
+        test_collection.insert_many(records)
+
+    print_mongo_conn() >> test_json_task() 
+test_mongo_db_pipeline()
+
+@dag(
+    start_date=datetime(2023, 1, 1),
+    schedule='@once'
+)
+def test_mongo_insert_pipeline():
+    load_taxi_trips_mongo_task(['/remote-storage/wrvz-psew/raw/trip_start_year=2023/trip_start_month=1/5aef8302908e4576a2782812d185d86e-0.parquet'],
+                               'mongo_prd',
+                               'test_trips',
+                               'test_trip_db')
+test_mongo_insert_pipeline()

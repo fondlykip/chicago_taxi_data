@@ -32,7 +32,7 @@ LOGGER = logging.getLogger(__name__)
 def taxi_trips_etl_pipeline():
     """ DAG Definition for ETL Pipeline """
 
-    year = "{{ params.year }}"
+    year = "{{params.year}}"
     month = "{{params.month}}"
     backfill = "{{params.backfill}}"
     dataset_code = "{{params.dataset_code}}"

@@ -124,16 +124,25 @@ def load_taxi_trips_mongo_task(files_to_load: list,
     for file_path in files_to_load:
         raw_df = pd.read_parquet(file_path,
                                  engine='pyarrow')
-        raw_df.set_index('trip_id')
-        raw_df = raw_df.loc[~raw_df['trip_id'].isin(loaded_ids)]
+        raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
+        raw_df = raw_df.loc[~raw_df['_id'].isin(loaded_ids)]
+        LOGGER.info('format data for Mongo Load')
         date_cols = [col for col in raw_df.columns if raw_df[col].dtype == 'datetime64[ns]']
         for col in date_cols:
             raw_df[col] = raw_df[col].dt.strftime("%Y-%m-%dT%H:%M:%S.000")
-        records = raw_df.to_json(orient='records')
-        parsed = loads(records)
-        json_dump = dumps(parsed)
-        mongo_hook.insert_many(mongo_coll, json_dump, mongo_db)
-        loaded_ids.extend(raw_df['trip_id'].values)
+        point_cols = ['pickup_centroid_location', 'dropoff_centroid_location']
+        # for col in point_cols:
+        #     raw_df[col] = raw_df[col].apply(lambda x: str(x).replace("'",'"'))
+        LOGGER.info(f'Data reformatting successful')
+        raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
+        records = raw_df.to_dict(orient='records')
+        for record in records:
+            for col in point_cols:
+                if record[col] is not None:
+                    record[col]['coordinates'] = record[col]['coordinates'].tolist()
+        LOGGER.info(f'insert {len(records)}rows into collection {mongo_coll}, in db {mongo_db}')
+        mongo_hook.insert_many(mongo_coll, records, mongo_db)
+        loaded_ids.extend(raw_df['_id'].values)
         count += 1
         LOGGER.info(f'{count} of {total_files} files written to Mongo DB...')
     LOGGER.info('Data Successfully written to Document Store')
