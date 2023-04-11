@@ -7,7 +7,8 @@ from airflow.decorators import dag
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from etl_tasks import (extract_taxi_trips_task,
                        load_taxi_trips_postgres_task,
-                       clear_down_processed_files)
+                       load_taxi_trips_mongo_task,
+                       clear_down_processed_files_task)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ LOGGER = logging.getLogger(__name__)
         "dataset_code": Param('wrvz-psew', type="string"),
         "data_bucket": Param(Variable.get('data_bucket'), type="string"),
         "psql_staging_table": Param('chicago_trip_data_stg', type="string"),
-        "psql_prd_table": Param('chicago_taxi_trip_data', type="string")
+        "psql_prd_table": Param('chicago_taxi_trip_data', type="string"),
+        "mongo_collection": Param('chicago_taxi_trips')
     },
     render_template_as_native_obj=True
 )
@@ -36,6 +38,7 @@ def taxi_trips_etl_pipeline():
     data_bucket = "{{params.data_bucket}}"
     psql_staging_table = "{{params.psql_staging_table}}"
     psql_prd_table = "{{params.psql_prd_table}}"
+    mongo_collection = "{{params.mongo_collection}}"
 
     create_psql_stg_tables = PostgresOperator(
         task_id='create_stg_tables',
@@ -50,7 +53,12 @@ def taxi_trips_etl_pipeline():
                                               data_bucket, Variable.get('chicago_app_token'))
 
     load_taxi_trips_postgres = load_taxi_trips_postgres_task(extracted_files,
+                                                             psql_staging_table,
                                                              Variable.get('postgres_staging_conn'))
+    
+    load_taxi_trips_mongo = load_taxi_trips_mongo_task(extracted_files,
+                                                      Variable.get('mongo_db'),
+                                                      mongo_collection)
 
     insert_staged_data_to_prod = PostgresOperator(
         task_id='insert_stg_to_prd',
@@ -60,10 +68,10 @@ def taxi_trips_etl_pipeline():
                     "prd_table": psql_prd_table}
     )
 
-    clear_down_processed_files_task = clear_down_processed_files(extracted_files)
+    clear_down_processed_files = clear_down_processed_files_task(extracted_files)
 
     create_psql_stg_tables >> extracted_files
     load_taxi_trips_postgres >> insert_staged_data_to_prod
-    [load_taxi_trips_postgres] >> clear_down_processed_files_task
+    [load_taxi_trips_postgres, load_taxi_trips_mongo] >> clear_down_processed_files
 
 taxi_trips_etl_pipeline()
