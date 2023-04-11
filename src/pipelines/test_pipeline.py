@@ -4,9 +4,8 @@ import logging
 from airflow.models import Variable
 from airflow.models.param import Param
 from airflow.decorators import dag, task
-from airflow.operators.python import get_current_context
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from etl_tasks import clear_down_processed_files
+from etl_tasks import clear_down_processed_files_task
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ def test_pipeline():
         return output
     
     file_list = test_list_files()
-    clear_down_processed_files(file_list)
+    clear_down_processed_files_task(file_list)
 
 test_pipeline()
 
