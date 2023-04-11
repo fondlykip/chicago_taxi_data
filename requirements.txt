@@ -1,4 +1,6 @@
 apache-airflow
+apache-airflow-providers-postgres
+apache-airflow-providers-mongo
 pandas
 numpy
 sodapy
