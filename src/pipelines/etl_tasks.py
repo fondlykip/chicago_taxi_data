@@ -105,7 +105,8 @@ def clear_down_processed_files_task(file_list):
 @task
 def load_taxi_trips_mongo_task(files_to_load: list,
                                mongo_conn: str,
-                               mongo_coll: str):
+                               mongo_coll: str,
+                               mongo_db: str):
     """
     Task to load data from parquet files to mongo collection
     Args:
@@ -125,7 +126,7 @@ def load_taxi_trips_mongo_task(files_to_load: list,
         raw_df.set_index('trip_id')
         raw_df = raw_df.loc[~raw_df['trip_id'].isin(loaded_ids)]
         records = raw_df.to_dict('records')
-        mongo_hook.insert_many(mongo_coll, records)
+        mongo_hook.insert_many(mongo_coll, records, mongo_db)
         loaded_ids.extend(raw_df['trip_id'].values)
         count += 1
         LOGGER.info(f'{count} of {total_files} files written to Mongo DB...')
