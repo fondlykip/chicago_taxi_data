@@ -9,10 +9,9 @@ from etl_functions import (query_chicago_data,
                            convert_point_cols,
                            list_files)
 from airflow.decorators import task
-from airflow.operators.python import get_current_context
+from airflow.providers.mongo.hooks.mongo import MongoHook
 
 LOGGER = logging.getLogger(__name__)
-
 
 @task(retries=2)
 def extract_taxi_trips_task(year,
@@ -54,6 +53,7 @@ def extract_taxi_trips_task(year,
 
 @task
 def load_taxi_trips_postgres_task(files_to_load: list,
+                                  destination_table: str,
                                   psql_conn: str):
     """
     Task to load extracted taxi trip data from remote storage to PSQL DB
@@ -61,33 +61,31 @@ def load_taxi_trips_postgres_task(files_to_load: list,
         - files_to_load: list of files to load to Postgres DB
         - psql_conn: connection string of Postgres DB
     """
-    params = get_current_context()['params']
-    destination_table = params['psql_staging_table']
     count = 0
     total_files = len(files_to_load)
     if total_files == 0:
         LOGGER.info('No files available for loading')
     loaded_ids = []
+    engine = create_engine(psql_conn)
+    point_cols = ['pickup_centroid_location', 'dropoff_centroid_location']
     for file_path in files_to_load:
         raw_df = pd.read_parquet(file_path,
                                  engine='pyarrow')
         raw_df.set_index('trip_id')
         raw_df = raw_df.loc[~raw_df['trip_id'].isin(loaded_ids)]
-        loaded_ids.extend(raw_df['trip_id'].values)
-        point_cols = ['pickup_centroid_location', 'dropoff_centroid_location']
         raw_df = convert_point_cols(raw_df, point_cols)
         LOGGER.info(f'Point data formatted for Postgres Load')
-        engine = create_engine(psql_conn)
         raw_df.to_sql(destination_table,
                       con=engine,
                       if_exists='append',
                       index=False)
+        loaded_ids.extend(raw_df['trip_id'].values)
         count += 1
         LOGGER.info(f'{count} of {total_files} files written to Postgres DB...')
     LOGGER.info('Data Successfully written to staging table')
 
 @task
-def clear_down_processed_files(file_list):
+def clear_down_processed_files_task(file_list):
     """
     Task to move processed files from raw folder to processed folder
     Args:
@@ -103,3 +101,33 @@ def clear_down_processed_files(file_list):
         LOGGER.info(f'moved file {file} to {destination_path}')
         total += 1
     LOGGER.info(f'{total} files moved from Raw folder to processed folder')
+
+@task
+def load_taxi_trips_mongo_task(files_to_load: list,
+                               mongo_conn: str,
+                               mongo_coll: str):
+    """
+    Task to load data from parquet files to mongo collection
+    Args:
+        - files_to_load: list of files to load to mongodb
+        - mongo_conn: connection string to mongo db
+        - mongo_coll: name of collection to load data to
+    """
+    mongo_hook = MongoHook(mongo_conn_id=mongo_conn)
+    count = 0
+    total_files = len(files_to_load)
+    if total_files == 0:
+        LOGGER.info('No files available for loading')
+    loaded_ids = []
+    for file_path in files_to_load:
+        raw_df = pd.read_parquet(file_path,
+                                 engine='pyarrow')
+        raw_df.set_index('trip_id')
+        raw_df = raw_df.loc[~raw_df['trip_id'].isin(loaded_ids)]
+        records = raw_df.to_dict('records')
+        mongo_hook.insert_many(mongo_coll, records)
+        loaded_ids.extend(raw_df['trip_id'].values)
+        count += 1
+        LOGGER.info(f'{count} of {total_files} files written to Mongo DB...')
+    LOGGER.info('Data Successfully written to Document Store')
+
