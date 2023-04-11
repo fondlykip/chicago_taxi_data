@@ -18,8 +18,9 @@ services:
     env_file:
       - .env
     volumes:
-      - ${PWD}/airflow/dags:/opt/airflow/dags
+      - ${PWD}/src/pipelines:/opt/airflow/dags
       - ${PWD}/airflow/logs:/opt/airflow/logs
+      - ${PWD}/remote-storage:/remote-storage:z
     container_name: airflow_scheduler
     networks:
       - ctdnet
@@ -32,15 +33,15 @@ services:
     env_file:
       - .env
     volumes:
-      - ${PWD}/airflow/dags:/opt/airflow/dags
+      - ${PWD}/src/pipelines:/opt/airflow/dags
       - ${PWD}/airflow/logs:/opt/airflow/logs
       - ${PWD}/airflow/scripts:/opt/airflow/scripts
+      - ${PWD}/remote-storage:/remote-storage:z
     ports:
       - "8080:8080"
     container_name: airflow_webserver
     networks:
       - ctdnet
-
   
   postgres_db:
     image: postgres
@@ -53,6 +54,7 @@ services:
       - ${PWD}/data/postgres/data:/var/lib/postgres/data
       - ${PWD}/data/postgres/scripts:/var/lib/postgres/scripts
       - ${PWD}/data/postgres/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ${PWD}/remote-storage:/remote-storage:z
     container_name: postgres_db
     networks:
       - ctdnet
@@ -68,6 +70,7 @@ services:
     volumes:
       - ${PWD}/data/mongo/data:/data/db
       - ${PWD}/data/mongo/scripts:/scripts
+      - ${PWD}/remote-storage:/remote-storage:z
     container_name: mongo_db
     networks:
       - ctdnet
