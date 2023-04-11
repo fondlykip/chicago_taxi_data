@@ -59,9 +59,9 @@ def taxi_trips_etl_pipeline():
                                                              Variable.get('postgres_staging_conn'))
     
     load_taxi_trips_mongo = load_taxi_trips_mongo_task(extracted_files,
-                                                      Connection.get_connection_from_secrets('mongo_db_conn'),
-                                                      mongo_collection,
-                                                      mongo_database)
+                                                       'mongo_prd',
+                                                       mongo_collection,
+                                                       mongo_database)
 
     insert_staged_data_to_prod = PostgresOperator(
         task_id='insert_stg_to_prd',

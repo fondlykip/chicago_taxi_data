@@ -1,11 +1,14 @@
 """ Airflow Pipeline to perform ETL Workflow for taxi trip data application """
 from datetime import datetime
 import logging
-from airflow.models import Variable
+from airflow.models import Variable, Connection
 from airflow.models.param import Param
 from airflow.decorators import dag, task
 from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.mongo.hooks.mongo import MongoHook
+
 from etl_tasks import clear_down_processed_files_task
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -65,3 +68,23 @@ def test_db_pipeline():
     drop_test_tbl_task >> load_data_task >> clear_db_task
 
 test_db_pipeline()
+
+
+@dag(
+    start_date=datetime(2023, 1, 1),
+    schedule='@once'
+)
+def test_mongo_db_pipeline():
+
+    @task
+    def print_mongo_conn():
+        # mongo_conn = Connection.get_connection_from_secrets('mongo_prd')
+        # mongo_uri = mongo_conn.get_uri()
+        # LOGGER.info(f'Mongo Connection URI: {mongo_uri}')
+        # LOGGER.info(f'Mongo Connection ID: {mongo_conn.conn_id}')
+        mongo_hook = MongoHook(conn_id='mongo_prd')
+        mongo_hook.get_collection("system.users", 'local')    
+    
+    print_mongo_conn()
+test_mongo_db_pipeline()
+        

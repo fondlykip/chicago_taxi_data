@@ -10,6 +10,7 @@ from etl_functions import (query_chicago_data,
                            list_files)
 from airflow.decorators import task
 from airflow.providers.mongo.hooks.mongo import MongoHook
+from json import loads, dumps
 
 LOGGER = logging.getLogger(__name__)
 
@@ -114,7 +115,7 @@ def load_taxi_trips_mongo_task(files_to_load: list,
         - mongo_conn: connection string to mongo db
         - mongo_coll: name of collection to load data to
     """
-    mongo_hook = MongoHook(mongo_conn_id=mongo_conn)
+    mongo_hook = MongoHook(conn_id=mongo_conn)
     count = 0
     total_files = len(files_to_load)
     if total_files == 0:
@@ -125,8 +126,13 @@ def load_taxi_trips_mongo_task(files_to_load: list,
                                  engine='pyarrow')
         raw_df.set_index('trip_id')
         raw_df = raw_df.loc[~raw_df['trip_id'].isin(loaded_ids)]
-        records = raw_df.to_dict('records')
-        mongo_hook.insert_many(mongo_coll, records, mongo_db)
+        date_cols = [col for col in raw_df.columns if raw_df[col].dtype == 'datetime64[ns]']
+        for col in date_cols:
+            raw_df[col] = raw_df[col].dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+        records = raw_df.to_json(orient='records')
+        parsed = loads(records)
+        json_dump = dumps(parsed)
+        mongo_hook.insert_many(mongo_coll, json_dump, mongo_db)
         loaded_ids.extend(raw_df['trip_id'].values)
         count += 1
         LOGGER.info(f'{count} of {total_files} files written to Mongo DB...')
