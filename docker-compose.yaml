@@ -11,7 +11,9 @@ services:
       - ctdnet
 
   airflow_scheduler:
-    build: .
+    build:
+      context: .
+      dockerfile: ./docker/scheduler/Dockerfile
     command: scheduler
     depends_on:
       - airflow_webserver
@@ -20,13 +22,15 @@ services:
     volumes:
       - ${PWD}/src/pipelines:/opt/airflow/dags
       - ${PWD}/airflow/logs:/opt/airflow/logs
-      - ${PWD}/remote-storage:/remote-storage:z
+      - ${PWD}/remote-storage:/remote-storage
     container_name: airflow_scheduler
     networks:
       - ctdnet
 
   airflow_webserver:
-    image: apache/airflow
+    build: 
+      context: .
+      dockerfile: ./docker/web_server/Dockerfile
     entrypoint: ./scripts/entrypoint.sh
     depends_on:
       - airflow_meta_db
@@ -36,7 +40,7 @@ services:
       - ${PWD}/src/pipelines:/opt/airflow/dags
       - ${PWD}/airflow/logs:/opt/airflow/logs
       - ${PWD}/airflow/scripts:/opt/airflow/scripts
-      - ${PWD}/remote-storage:/remote-storage:z
+      - ${PWD}/remote-storage:/remote-storage
     ports:
       - "8080:8080"
     container_name: airflow_webserver
@@ -54,7 +58,7 @@ services:
       - ${PWD}/data/postgres/data:/var/lib/postgres/data
       - ${PWD}/data/postgres/scripts:/var/lib/postgres/scripts
       - ${PWD}/data/postgres/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ${PWD}/remote-storage:/remote-storage:z
+      - ${PWD}/remote-storage:/remote-storage
     container_name: postgres_db
     networks:
       - ctdnet
@@ -70,7 +74,7 @@ services:
     volumes:
       - ${PWD}/data/mongo/data:/data/db
       - ${PWD}/data/mongo/scripts:/scripts
-      - ${PWD}/remote-storage:/remote-storage:z
+      - ${PWD}/remote-storage:/remote-storage
     container_name: mongo_db
     networks:
       - ctdnet
