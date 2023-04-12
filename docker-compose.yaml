@@ -78,6 +78,16 @@ services:
     container_name: mongo_db
     networks:
       - ctdnet
+  
+  app_server:
+    build:
+      context: .
+      dockerfile: ./docker/api/Dockerfile
+    ports:
+      - "9001:9001"
+    container_name: app_server
+    networks:
+      - ctdnet
 
 volumes:
   airflow-logs:
