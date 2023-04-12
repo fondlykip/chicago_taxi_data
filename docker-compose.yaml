@@ -20,9 +20,9 @@ services:
     env_file:
       - .env
     volumes:
-      - ${PWD}/src/pipelines:/opt/airflow/dags
-      - ${PWD}/airflow/logs:/opt/airflow/logs
-      - ${PWD}/remote-storage:/remote-storage
+      - ${PWD}/src/pipelines:/opt/airflow/dags:z
+      - airflow-logs:/opt/airflow/logs:z
+      - ${PWD}/remote-storage:/remote-storage:z
     container_name: airflow_scheduler
     networks:
       - ctdnet
@@ -37,10 +37,10 @@ services:
     env_file:
       - .env
     volumes:
-      - ${PWD}/src/pipelines:/opt/airflow/dags
-      - ${PWD}/airflow/logs:/opt/airflow/logs
-      - ${PWD}/airflow/scripts:/opt/airflow/scripts
-      - ${PWD}/remote-storage:/remote-storage
+      - ${PWD}/src/pipelines:/opt/airflow/dags:z
+      - airflow-logs:/opt/airflow/logs:z
+      - ${PWD}/docker/web_server/scripts:/opt/airflow/scripts
+      - ${PWD}/remote-storage:/remote-storage:z
     ports:
       - "8080:8080"
     container_name: airflow_webserver
@@ -78,7 +78,10 @@ services:
     container_name: mongo_db
     networks:
       - ctdnet
-  
+
+volumes:
+  airflow-logs:
+
 networks:
   ctdnet:
     driver: bridge

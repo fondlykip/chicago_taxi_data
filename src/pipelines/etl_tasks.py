@@ -7,10 +7,11 @@ from sqlalchemy import create_engine
 from etl_functions import (query_chicago_data,
                            generate_query,
                            convert_point_cols,
-                           list_files)
+                           list_files,
+                           format_taxi_df_to_records)
 from airflow.decorators import task
 from airflow.providers.mongo.hooks.mongo import MongoHook
-from json import loads, dumps
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -126,24 +127,14 @@ def load_taxi_trips_mongo_task(files_to_load: list,
                                  engine='pyarrow')
         raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
         raw_df = raw_df.loc[~raw_df['_id'].isin(loaded_ids)]
-        LOGGER.info('format data for Mongo Load')
-        date_cols = [col for col in raw_df.columns if raw_df[col].dtype == 'datetime64[ns]']
-        for col in date_cols:
-            raw_df[col] = raw_df[col].dt.strftime("%Y-%m-%dT%H:%M:%S.000")
-        point_cols = ['pickup_centroid_location', 'dropoff_centroid_location']
-        # for col in point_cols:
-        #     raw_df[col] = raw_df[col].apply(lambda x: str(x).replace("'",'"'))
-        LOGGER.info(f'Data reformatting successful')
-        raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
-        records = raw_df.to_dict(orient='records')
-        for record in records:
-            for col in point_cols:
-                if record[col] is not None:
-                    record[col]['coordinates'] = record[col]['coordinates'].tolist()
-        LOGGER.info(f'insert {len(records)}rows into collection {mongo_coll}, in db {mongo_db}')
-        mongo_hook.insert_many(mongo_coll, records, mongo_db)
-        loaded_ids.extend(raw_df['_id'].values)
-        count += 1
-        LOGGER.info(f'{count} of {total_files} files written to Mongo DB...')
+        if raw_df.shape[0] !=0:
+            records = format_taxi_df_to_records(raw_df)
+            LOGGER.info(f'insert {len(records)} rows into collection {mongo_coll}, in db {mongo_db}')
+            mongo_hook.insert_many(mongo_coll, records, mongo_db, ordered=False)
+            loaded_ids.extend(raw_df['_id'].values)
+            count += 1
+            LOGGER.info(f'{count} of {total_files} files written to Mongo DB...')
+        else:
+            LOGGER.info(f'Skipping file - No rows to load')
     LOGGER.info('Data Successfully written to Document Store')
 

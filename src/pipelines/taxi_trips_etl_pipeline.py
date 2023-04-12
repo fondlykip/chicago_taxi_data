@@ -47,7 +47,8 @@ def taxi_trips_etl_pipeline():
         postgres_conn_id='postgres_staging_conn',
         sql="sql/create_stg_tbl.sql",
         parameters={"psql_staging_table": psql_staging_table,
-                    "psql_prd_table": psql_staging_table}
+                    "psql_prd_table": psql_staging_table},
+        retries=1
         )
 
     extracted_files = extract_taxi_trips_task(year, month,

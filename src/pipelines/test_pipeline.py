@@ -114,7 +114,7 @@ test_mongo_db_pipeline()
     schedule='@once'
 )
 def test_mongo_insert_pipeline():
-    load_taxi_trips_mongo_task(['/remote-storage/wrvz-psew/raw/trip_start_year=2023/trip_start_month=1/5aef8302908e4576a2782812d185d86e-0.parquet'],
+    load_taxi_trips_mongo_task(['/remote-storage/wrvz-psew/test/005473c667174bd5b3b172eb311f8181-0.parquet'],
                                'mongo_prd',
                                'test_trips',
                                'test_trip_db')

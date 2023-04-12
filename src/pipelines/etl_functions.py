@@ -127,3 +127,20 @@ def list_files(bucket, path):
                     output_list.append(join(root, file))
     LOGGER.info(f'{len(output_list)} Parquet Files found at path {path_to_list}.')
     return output_list
+
+def format_taxi_df_to_records(raw_df: pd.DataFrame()):
+    LOGGER.info('format data for Mongo Load')
+    date_cols = [col for col in raw_df.columns if raw_df[col].dtype == 'datetime64[ns]']
+    for col in date_cols:
+        raw_df[col] = raw_df[col].dt.strftime("%Y-%m-%dT%H:%M:%S.000")
+    point_cols = ['pickup_centroid_location', 'dropoff_centroid_location']
+    # for col in point_cols:
+    #     raw_df[col] = raw_df[col].apply(lambda x: str(x).replace("'",'"'))
+    LOGGER.info(f'Data reformatting successful')
+    raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
+    records = raw_df.to_dict(orient='records')
+    for record in records:
+        for col in point_cols:
+            if record[col] is not None:
+                record[col]['coordinates'] = record[col]['coordinates'].tolist()
+    return records
