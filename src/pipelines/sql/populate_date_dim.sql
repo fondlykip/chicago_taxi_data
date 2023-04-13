@@ -1,6 +1,6 @@
-DROP TABLE if exists {{ params.date_dim }};
+DROP TABLE if exists {{ params.psql_date_dim_table }};
 
-CREATE TABLE {{ params.date_dim }}
+CREATE TABLE {{ params.psql_date_dim_table }}
 (
   date_dim_id              INT NOT NULL,
   date_actual              DATE NOT NULL,
@@ -33,14 +33,14 @@ CREATE TABLE {{ params.date_dim }}
   weekend_indr             BOOLEAN NOT NULL
 );
 
-ALTER TABLE {{ params.date_dim }} ADD CONSTRAINT {{params.date_dim}}_date_dim_id_pk PRIMARY KEY (date_dim_id);
+ALTER TABLE {{ params.psql_date_dim_table }} ADD CONSTRAINT {{ params.psql_date_dim_table }}_date_dim_id_pk PRIMARY KEY (date_dim_id);
 
 CREATE INDEX d_date_date_actual_idx
-  ON {{params.date_dim}}(date_actual);
+  ON {{ params.psql_date_dim_table }}(date_actual);
 
 COMMIT;
 
-INSERT INTO {{ params.date_dim }}
+INSERT INTO {{ params.psql_date_dim_table }}
 SELECT TO_CHAR(datum, 'yyyymmdd')::INT AS date_dim_id,
        datum AS date_actual,
        EXTRACT(EPOCH FROM datum) AS epoch,
