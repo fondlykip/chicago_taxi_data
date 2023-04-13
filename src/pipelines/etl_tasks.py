@@ -115,7 +115,8 @@ def load_taxi_trips_mongo_task(files_to_load: list,
     Args:
         - files_to_load: list of files to load to mongodb
         - mongo_conn: connection string to mongo db
-        - mongo_coll: name of collection to load data to
+        - mongo_coll: name of collection to load documents to
+        - mongo_db: Name of the mongo db to write collection to
     """
     mongo_hook = MongoHook(conn_id=mongo_conn)
     count = 0
@@ -142,6 +143,13 @@ def load_taxi_trips_mongo_task(files_to_load: list,
 @task
 def load_community_area_dim(destination_table: str,
                             psql_conn: str):
+    """
+    Airflow task to load data regarding community areas for
+    populating dimension table
+    Args:
+        - destination_table: Name of table to load Area Data to
+        - psql_conn: Connection string to psql db
+    """
     engine = create_engine(psql_conn)
     areas_df = get_community_area_data()
     areas_df.to_sql(destination_table,
