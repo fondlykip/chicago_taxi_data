@@ -129,13 +129,14 @@ def list_files(bucket, path):
     return output_list
 
 def format_taxi_df_to_records(raw_df: pd.DataFrame()):
+    """
+    Format input dataframe of taxi trip records for Mongodb load
+    """
     LOGGER.info('format data for Mongo Load')
     date_cols = [col for col in raw_df.columns if raw_df[col].dtype == 'datetime64[ns]']
     for col in date_cols:
         raw_df[col] = raw_df[col].dt.strftime("%Y-%m-%dT%H:%M:%S.000")
     point_cols = ['pickup_centroid_location', 'dropoff_centroid_location']
-    # for col in point_cols:
-    #     raw_df[col] = raw_df[col].apply(lambda x: str(x).replace("'",'"'))
     LOGGER.info(f'Data reformatting successful')
     raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
     records = raw_df.to_dict(orient='records')
@@ -144,3 +145,24 @@ def format_taxi_df_to_records(raw_df: pd.DataFrame()):
             if record[col] is not None:
                 record[col]['coordinates'] = record[col]['coordinates'].tolist()
     return records
+
+def sq_ft_to_sq_km(x: float) -> float:
+    " Function to convert values in ft^2 to km^2"
+    conv_factor = 0.000000092903
+    return x * conv_factor
+
+def get_community_area_data() -> pd.DataFrame():
+    """ 
+    Function to retrieve and format Community Area data 
+    from the city of chicago
+    """
+    data_url = "https://data.cityofchicago.org/api/views/igwz-8jzy/rows.csv?accessType=DOWNLOAD"
+    areas_df = pd.read_csv(data_url)
+    areas_df =  areas_df[['AREA_NUMBE', 'COMMUNITY', 'SHAPE_AREA']]
+    areas_df.rename(columns={'AREA_NUMBER': 'community_area_id',
+                             'COMMUNITY':'community_area_name',
+                             'SHAPE_AREA':'community_area_size'},
+                    inplace=True)
+    areas_df['community_area_size'] = areas_df['community_area_size'].apply(lambda x: sq_ft_to_sq_km(x))
+    return areas_df
+    

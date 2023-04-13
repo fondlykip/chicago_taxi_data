@@ -1,7 +1,7 @@
 """ Airflow Pipeline to perform ETL Workflow for taxi trip data application """
 from datetime import datetime
 import logging
-from airflow.models import Variable, Connection
+from airflow.models import Variable
 from airflow.models.param import Param
 from airflow.decorators import dag
 from airflow.providers.postgres.operators.postgres import PostgresOperator
@@ -22,8 +22,8 @@ LOGGER = logging.getLogger(__name__)
         "backfill": Param(False, type="boolean"),
         "dataset_code": Param('wrvz-psew', type="string"),
         "data_bucket": Param(Variable.get('data_bucket'), type="string"),
-        "psql_staging_table": Param('chicago_trip_data_stg', type="string"),
-        "psql_prd_table": Param('chicago_taxi_trip_data', type="string"),
+        "psql_staging_table": Param(Variable.get('psql_trip_stg_table'), type="string"),
+        "psql_prd_table": Param(Variable.get('psql_trip_fact_table'), type="string"),
         "mongo_collection": Param('chicago_taxi_trips_collection', type="string"),
         "mongo_database": Param('chicago_taxi_trips_database', type="string")
     },
@@ -44,7 +44,7 @@ def taxi_trips_etl_pipeline():
 
     create_psql_stg_tables = PostgresOperator(
         task_id='create_stg_tables',
-        postgres_conn_id='postgres_staging_conn',
+        postgres_conn_id='psql_trip_db_conn',
         sql="sql/create_stg_tbl.sql",
         parameters={"psql_staging_table": psql_staging_table,
                     "psql_prd_table": psql_staging_table},
@@ -57,7 +57,7 @@ def taxi_trips_etl_pipeline():
 
     load_taxi_trips_postgres = load_taxi_trips_postgres_task(extracted_files,
                                                              psql_staging_table,
-                                                             Variable.get('postgres_staging_conn'))
+                                                             Variable.get('psql_trip_db_conn_str'))
     
     load_taxi_trips_mongo = load_taxi_trips_mongo_task(extracted_files,
                                                        'mongo_prd',
@@ -66,7 +66,7 @@ def taxi_trips_etl_pipeline():
 
     insert_staged_data_to_prod = PostgresOperator(
         task_id='insert_stg_to_prd',
-        postgres_conn_id='postgres_staging_conn',
+        postgres_conn_id='psql_trip_db_conn',
         sql='./sql/INSERT_STG_PRD.sql',
         parameters={"staging_table": psql_staging_table,
                     "prd_table": psql_prd_table}

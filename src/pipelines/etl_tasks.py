@@ -8,7 +8,8 @@ from etl_functions import (query_chicago_data,
                            generate_query,
                            convert_point_cols,
                            list_files,
-                           format_taxi_df_to_records)
+                           format_taxi_df_to_records,
+                           get_community_area_data)
 from airflow.decorators import task
 from airflow.providers.mongo.hooks.mongo import MongoHook
 
@@ -138,3 +139,13 @@ def load_taxi_trips_mongo_task(files_to_load: list,
             LOGGER.info(f'Skipping file - No rows to load')
     LOGGER.info('Data Successfully written to Document Store')
 
+@task
+def load_community_area_dim(destination_table: str,
+                            psql_conn: str):
+    engine = create_engine(psql_conn)
+    areas_df = get_community_area_data()
+    areas_df.to_sql(destination_table,
+                    con=engine,
+                    if_exists='append',
+                    index=False)
+    LOGGER.info(f'Populating Community Areas: Complete')

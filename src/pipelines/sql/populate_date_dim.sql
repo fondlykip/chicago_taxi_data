@@ -1,6 +1,6 @@
-DROP TABLE if exists d_date;
+DROP TABLE if exists {{ params.date_dim }};
 
-CREATE TABLE d_date
+CREATE TABLE {{ params.date_dim }}
 (
   date_dim_id              INT NOT NULL,
   date_actual              DATE NOT NULL,
@@ -33,14 +33,14 @@ CREATE TABLE d_date
   weekend_indr             BOOLEAN NOT NULL
 );
 
-ALTER TABLE public.d_date ADD CONSTRAINT d_date_date_dim_id_pk PRIMARY KEY (date_dim_id);
+ALTER TABLE {{ params.date_dim }} ADD CONSTRAINT {{params.date_dim}}_date_dim_id_pk PRIMARY KEY (date_dim_id);
 
 CREATE INDEX d_date_date_actual_idx
-  ON d_date(date_actual);
+  ON {{params.date_dim}}(date_actual);
 
 COMMIT;
 
-INSERT INTO d_date
+INSERT INTO {{ params.date_dim }}
 SELECT TO_CHAR(datum, 'yyyymmdd')::INT AS date_dim_id,
        datum AS date_actual,
        EXTRACT(EPOCH FROM datum) AS epoch,
@@ -78,7 +78,7 @@ SELECT TO_CHAR(datum, 'yyyymmdd')::INT AS date_dim_id,
            WHEN EXTRACT(ISODOW FROM datum) IN (6, 7) THEN TRUE
            ELSE FALSE
            END AS weekend_indr
-FROM (SELECT '1970-01-01'::DATE + SEQUENCE.DAY AS datum
+FROM (SELECT '2010-01-01'::DATE + SEQUENCE.DAY AS datum
       FROM GENERATE_SERIES(0, 29219) AS SEQUENCE (DAY)
       GROUP BY SEQUENCE.DAY) DQ
 ORDER BY 1;
