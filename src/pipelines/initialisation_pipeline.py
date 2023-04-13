@@ -3,6 +3,7 @@ import logging
 from airflow.decorators import dag
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.models import Variable
+from airflow.models.param import Param
 from etl_tasks import (
     load_community_area_dim
 )
@@ -12,31 +13,42 @@ LOGGER = logging.getLogger(__name__)
 @dag(
     start_date = datetime(2023, 1, 1),
     schedule='@once',
-    render_template_as_native_obj=True
+    render_template_as_native_obj=True,
+    #catchup=False,
+    params={
+        "psql_date_dim_table":Param(Variable.get('psql_date_dim_table'), type="string"),
+        "psql_trip_fact_table":Param(Variable.get('psql_trip_fact_table'), type="string"),
+        "psql_comm_area_table":Param(Variable.get('psql_comm_area_table'), type="string"),
+        "psql_trip_db_conn_str":Param(Variable.get('psql_trip_db_conn_str'), type="string")
+    }
 )
 def initialisation_pipeline():
     """ DAG Definition for initialisation Pipeline """
+    psql_date_dim_table = "{{params.psql_date_dim_table}}"
+    psql_trip_fact_table = "{{params.psql_trip_fact_table}}"
+    psql_comm_area_table = "{{params.psql_comm_area_table}}"
+    psql_trip_db_conn_str = "{{params.psql_trip_db_conn_str}}"
 
     create_date_dim = PostgresOperator(
-        task_id='populate date dim',
+        task_id='create_date_dim',
         postgres_conn_id='psql_trip_db_conn',
         sql='sql/populate_date_dim.sql',
-        parameters={'date_dim':Variable.get('psql_date_dim_table')}
+        parameters={"psql_date_dim_table": psql_date_dim_table}
     )
 
     create_psql_tables = PostgresOperator(
         task_id='create_psql_tables',
         postgres_conn_id='psql_trip_db_conn',
         sql='sql/create_prd_tbl.sql',
-        parametes={"trip_table":Variable.get('psql_trip_fact_table'),
-                   "comm_area_table":Variable.get('psql_comm_area_table'),
-                   "date_dim":Variable.get('psql_date_dim_table')},
+        parameters={"psql_trip_fact_table": psql_trip_fact_table,
+                   "psql_comm_area_table": psql_comm_area_table,
+                   "psql_date_dim_table": psql_date_dim_table},
         retries=1
     )
 
-    populate_community_areas = load_community_area_dim(Variable.get('psql_comm_area_table'),
-                                                       Variable.get('psql_conn_str'))
+    populate_community_areas = load_community_area_dim(psql_comm_area_table,
+                                                       psql_trip_db_conn_str)
     
-    create_date_dim > create_psql_tables > populate_community_areas
+    create_date_dim >> create_psql_tables >> populate_community_areas
 
 initialisation_pipeline()
