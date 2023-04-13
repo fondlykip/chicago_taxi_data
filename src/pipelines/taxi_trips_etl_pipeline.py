@@ -8,13 +8,14 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from etl_tasks import (extract_taxi_trips_task,
                        load_taxi_trips_postgres_task,
                        load_taxi_trips_mongo_task,
-                       clear_down_processed_files_task)
+                       clear_down_processed_files_task,
+                       export_mongo_task, export_psql_task)
 
 
 LOGGER = logging.getLogger(__name__)
 
 @dag(
-    start_date=datetime(2023, 1, 1),
+    start_date=datetime(2023, 4, 10),
     schedule='0 0 9 * *',
     params={
         "year": Param(2023, type="integer"),
@@ -74,8 +75,18 @@ def taxi_trips_etl_pipeline():
 
     clear_down_processed_files = clear_down_processed_files_task(extracted_files)
 
+    export_psql = export_psql_task(Variable.get('psql_trip_db_conn_str'),
+                                   psql_prd_table,
+                                   data_bucket)
+    export_mongo = export_mongo_task('mongo_prd',
+                                     mongo_collection,
+                                     mongo_database,
+                                     data_bucket)
+
     create_psql_stg_tables >> extracted_files
     load_taxi_trips_postgres >> insert_staged_data_to_prod
     load_taxi_trips_postgres >> load_taxi_trips_mongo >> clear_down_processed_files
+
+    [insert_staged_data_to_prod, load_taxi_trips_mongo] >> export_psql >> export_mongo
 
 taxi_trips_etl_pipeline()

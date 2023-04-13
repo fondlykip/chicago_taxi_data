@@ -4,15 +4,14 @@ from fastapi.responses import Response, JSONResponse
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field, EmailStr
 from bson import ObjectId
-from shapely import Point
+from geojson_pydantic.geometries import Point
 from typing import Optional, List
 import datetime
 import motor.motor_asyncio
 
 mongoApp = FastAPI()
 client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGO_CONN_STR"])
-db = client.college
-
+db = client.chicago_taxi_trips_collection
 
 class PyObjectId(ObjectId):
     @classmethod

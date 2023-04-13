@@ -85,6 +85,8 @@ services:
       dockerfile: ./src/self_service_api/Dockerfile
     ports:
       - "9001:9001"
+    volumes:
+      - ${PWD}/remote-storage:/remote-storage
     container_name: app_server
     networks:
       - ctdnet

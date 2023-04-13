@@ -171,4 +171,5 @@ def format_community_area_data(areas_df: pd.DataFrame) -> pd.DataFrame():
                     inplace=True)
     areas_df['community_area_size'] = areas_df['community_area_size'].apply(lambda x: sq_ft_to_sq_km(x))
     return areas_df
-    
+
+

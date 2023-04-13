@@ -3,3 +3,7 @@ pydantic
 uvicorn
 sqlalchemy
 psycopg2
+geoalchemy2
+shapely
+motor
+geojson_pydantic

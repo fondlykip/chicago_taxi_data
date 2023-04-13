@@ -68,5 +68,5 @@ def initialisation_pipeline():
                                                        psql_trip_db_conn_str)
     
     drop_tables >> create_date_dim >> create_psql_tables >> populate_community_areas
-
+    drop_mongo_collection
 initialisation_pipeline()

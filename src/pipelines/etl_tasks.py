@@ -181,9 +181,9 @@ def drop_mongo_collection_task(mongo_conn,
         LOGGER.info(f'No Database found with name {mongo_db_name}')
 
 @task
-def export_psql(psql_conn,
-                table_name,
-                data_bucket):
+def export_psql_task(psql_conn,
+                     table_name,
+                     data_bucket):
     engine = create_engine(psql_conn)
     dump_path = f"/{data_bucket}/dumps/psql/"
     dump_csv_filename = "trip_dump.csv"
@@ -210,10 +210,10 @@ def export_psql(psql_conn,
     LOGGER.info(f'psql successfully dumped to {dump_csv_filepath}, {dump_json_filepath}')
 
 @task
-def export_mongo(mongo_conn,
-                 mongo_coll,
-                 mongo_db,
-                 data_bucket):
+def export_mongo_task(mongo_conn,
+                      mongo_coll,
+                      mongo_db,
+                      data_bucket):
     dump_path = f"/{data_bucket}/dumps/mongo/"
     dump_csv_filename = "trip_dump.csv"
     dump_json_filename = "trip_dump.json"
