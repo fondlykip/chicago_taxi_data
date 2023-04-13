@@ -67,7 +67,7 @@ def taxi_trips_etl_pipeline():
     insert_staged_data_to_prod = PostgresOperator(
         task_id='insert_stg_to_prd',
         postgres_conn_id='psql_trip_db_conn',
-        sql='./sql/INSERT_STG_PRD.sql',
+        sql='./sql/insert_stg_to_prd.sql',
         parameters={"staging_table": psql_staging_table,
                     "prd_table": psql_prd_table}
     )
