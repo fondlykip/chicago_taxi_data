@@ -147,17 +147,23 @@ def format_taxi_df_to_records(raw_df: pd.DataFrame()):
     return records
 
 def sq_ft_to_sq_km(x: float) -> float:
-    " Function to convert values in ft^2 to km^2"
-    conv_factor = 0.000000092903
-    return x * conv_factor
+    """
+    Function to convert an input value from ft^2 to km^2
+    Args:
+        - x: Float value to convert
+    Returns
+        - x_sqkm: x converted to Square Kilometers
 
-def get_community_area_data() -> pd.DataFrame():
+    """
+    conv_factor = 0.000000092903
+    x_sqkm = x * conv_factor
+    return x_sqkm
+
+def format_community_area_data(areas_df: pd.DataFrame) -> pd.DataFrame():
     """ 
     Function to retrieve and format Community Area data 
     from the city of chicago
     """
-    data_url = "https://data.cityofchicago.org/api/views/igwz-8jzy/rows.csv?accessType=DOWNLOAD"
-    areas_df = pd.read_csv(data_url)
     areas_df =  areas_df[['AREA_NUMBE', 'COMMUNITY', 'SHAPE_AREA']]
     areas_df.rename(columns={'AREA_NUMBE': 'community_area_id',
                              'COMMUNITY':'community_area_name',

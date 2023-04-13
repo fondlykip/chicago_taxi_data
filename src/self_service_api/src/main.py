@@ -1,6 +1,6 @@
 from typing import Union
 from fastapi import FastAPI
-from database import Base
+from .psql_database import psqlBase
 
 app = FastAPI()
 

@@ -15,7 +15,7 @@ LOGGER = logging.getLogger(__name__)
 
 @dag(
     start_date=datetime(2023, 1, 1),
-    schedule='@once',
+    schedule='0 0 9 * *',
     params={
         "year": Param(2023, type="integer"),
         "month": Param(1, type="integer"),
@@ -24,8 +24,8 @@ LOGGER = logging.getLogger(__name__)
         "data_bucket": Param(Variable.get('data_bucket'), type="string"),
         "psql_staging_table": Param(Variable.get('psql_trip_stg_table'), type="string"),
         "psql_prd_table": Param(Variable.get('psql_trip_fact_table'), type="string"),
-        "mongo_collection": Param('chicago_taxi_trips_collection', type="string"),
-        "mongo_database": Param('chicago_taxi_trips_database', type="string")
+        "mongo_collection": Param(Variable.get('mongo_collection'), type="string"),
+        "mongo_database": Param(Variable.get('mongo_database'), type="string")
     },
     render_template_as_native_obj=True
 )
@@ -73,8 +73,6 @@ def taxi_trips_etl_pipeline():
     )
 
     clear_down_processed_files = clear_down_processed_files_task(extracted_files)
-
-    # TODO Roll ups/ Summary Datasets
 
     create_psql_stg_tables >> extracted_files
     load_taxi_trips_postgres >> insert_staged_data_to_prod

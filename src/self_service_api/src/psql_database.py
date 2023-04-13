@@ -7,4 +7,4 @@ PSQL_TRIP_DB_CONN_STR="postgresql://postgres:pass@postgres_db:5432/chicago_taxi_
 engine = create_engine(PSQL_TRIP_DB_CONN_STR)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+psqlBase = declarative_base()

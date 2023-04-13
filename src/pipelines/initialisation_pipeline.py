@@ -5,21 +5,24 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.models import Variable
 from airflow.models.param import Param
 from etl_tasks import (
-    load_community_area_dim
+    load_community_area_dim,
+    drop_mongo_collection_task
 )
     
 LOGGER = logging.getLogger(__name__)
 
 @dag(
     start_date = datetime(2023, 1, 1),
-    schedule='@once',
+    schedule=None,
     render_template_as_native_obj=True,
-    #catchup=False,
+    catchup=False,
     params={
         "psql_date_dim_table":Param(Variable.get('psql_date_dim_table'), type="string"),
         "psql_trip_fact_table":Param(Variable.get('psql_trip_fact_table'), type="string"),
         "psql_comm_area_table":Param(Variable.get('psql_comm_area_table'), type="string"),
-        "psql_trip_db_conn_str":Param(Variable.get('psql_trip_db_conn_str'), type="string")
+        "psql_trip_db_conn_str":Param(Variable.get('psql_trip_db_conn_str'), type="string"),
+        "mongo_database":Param(Variable.get('mongo_database'), type="string"),
+        "mongo_collection":Param(Variable.get('mongo_collection'), type="string")
     }
 )
 def initialisation_pipeline():
@@ -28,6 +31,8 @@ def initialisation_pipeline():
     psql_trip_fact_table = "{{params.psql_trip_fact_table}}"
     psql_comm_area_table = "{{params.psql_comm_area_table}}"
     psql_trip_db_conn_str = "{{params.psql_trip_db_conn_str}}"
+    mongo_collection = "{{params.mongo_collection}}"
+    mongo_database = "{{params.mongo_database}}"
 
     drop_tables = PostgresOperator(
         task_id='drop_tables',
@@ -37,6 +42,10 @@ def initialisation_pipeline():
                     "psql_trip_fact_table":psql_trip_fact_table,
                     "psql_comm_area_table":psql_comm_area_table}
     )
+
+    drop_mongo_collection = drop_mongo_collection_task('mongo_prd',
+                                                       mongo_database,
+                                                       mongo_collection)
 
     create_date_dim = PostgresOperator(
         task_id='create_date_dim',

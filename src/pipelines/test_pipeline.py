@@ -7,7 +7,9 @@ from airflow.decorators import dag, task
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.mongo.hooks.mongo import MongoHook
 
-from etl_tasks import clear_down_processed_files_task, load_taxi_trips_mongo_task
+from etl_tasks import (clear_down_processed_files_task,
+                       load_taxi_trips_mongo_task,
+                       drop_mongo_collection_task)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -72,7 +74,7 @@ test_db_pipeline()
 
 @dag(
     start_date=datetime(2023, 1, 1),
-    schedule='@once'
+    schedule=None
 )
 def test_mongo_db_pipeline():
 
@@ -111,7 +113,7 @@ test_mongo_db_pipeline()
 
 @dag(
     start_date=datetime(2023, 1, 1),
-    schedule='@once'
+    schedule=None
 )
 def test_mongo_insert_pipeline():
     load_taxi_trips_mongo_task(['/remote-storage/wrvz-psew/test/005473c667174bd5b3b172eb311f8181-0.parquet'],
@@ -119,3 +121,29 @@ def test_mongo_insert_pipeline():
                                'test_trips',
                                'test_trip_db')
 test_mongo_insert_pipeline()
+
+
+@dag(
+    start_date=datetime(2023, 1, 1),
+    schedule=None
+)
+def test_mongo_drop_pipeline():
+    drop_mongo_collection_task('mongo_prd',
+                               'test_trip_db',
+                               'test_trips')
+
+test_mongo_drop_pipeline()
+
+
+@dag(
+    start_date=datetime(2023, 1, 1),
+    schedule=None
+)
+def test_scheduling():
+    @task
+    def test_task():
+        LOGGER.info(f'This is a test, run at {datetime.now()}')
+    
+    test_task()
+
+test_scheduling()

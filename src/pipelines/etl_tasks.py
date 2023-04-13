@@ -9,9 +9,11 @@ from etl_functions import (query_chicago_data,
                            convert_point_cols,
                            list_files,
                            format_taxi_df_to_records,
-                           get_community_area_data)
+                           format_community_area_data)
 from airflow.decorators import task
 from airflow.providers.mongo.hooks.mongo import MongoHook
+from pymongo.database import Database
+from pymongo.errors import InvalidName
 
 
 LOGGER = logging.getLogger(__name__)
@@ -151,9 +153,29 @@ def load_community_area_dim(destination_table: str,
         - psql_conn: Connection string to psql db
     """
     engine = create_engine(psql_conn)
-    areas_df = get_community_area_data()
-    areas_df.to_sql(destination_table,
-                    con=engine,
-                    if_exists='append',
-                    index=False)
+    data_url = "https://data.cityofchicago.org/api/views/igwz-8jzy/rows.csv?accessType=DOWNLOAD"
+    areas_df = pd.read_csv(data_url)
+    formatted_areas_df = format_community_area_data(areas_df)
+    formatted_areas_df.to_sql(destination_table,
+                              con=engine,
+                              if_exists='append',
+                              index=False)
     LOGGER.info(f'Populating Community Areas: Complete')
+
+@task
+def drop_mongo_collection_task(mongo_conn,
+                               mongo_db_name,
+                               mongo_coll):
+    """
+    Airflow task to drop a mongodb collection
+    Args:
+        - mongo_conn: connection to use
+        - mongo_db_name: name of db to drop
+    """
+    mongo_hook = MongoHook(conn_id=mongo_conn)
+    try:
+        mongo_db = Database(mongo_hook.get_conn(),
+                            mongo_db_name)
+        mongo_db.drop_collection(mongo_coll)
+    except InvalidName:
+        LOGGER.info(f'No Database found with name {mongo_db_name}')
