@@ -159,7 +159,7 @@ def get_community_area_data() -> pd.DataFrame():
     data_url = "https://data.cityofchicago.org/api/views/igwz-8jzy/rows.csv?accessType=DOWNLOAD"
     areas_df = pd.read_csv(data_url)
     areas_df =  areas_df[['AREA_NUMBE', 'COMMUNITY', 'SHAPE_AREA']]
-    areas_df.rename(columns={'AREA_NUMBER': 'community_area_id',
+    areas_df.rename(columns={'AREA_NUMBE': 'community_area_id',
                              'COMMUNITY':'community_area_name',
                              'SHAPE_AREA':'community_area_size'},
                     inplace=True)

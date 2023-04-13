@@ -29,6 +29,15 @@ def initialisation_pipeline():
     psql_comm_area_table = "{{params.psql_comm_area_table}}"
     psql_trip_db_conn_str = "{{params.psql_trip_db_conn_str}}"
 
+    drop_tables = PostgresOperator(
+        task_id='drop_tables',
+        postgres_conn_id='psql_trip_db_conn',
+        sql='sql/drop_tables.sql',
+        parameters={"psql_date_dim_table":psql_date_dim_table,
+                    "psql_trip_fact_table":psql_trip_fact_table,
+                    "psql_comm_area_table":psql_comm_area_table}
+    )
+
     create_date_dim = PostgresOperator(
         task_id='create_date_dim',
         postgres_conn_id='psql_trip_db_conn',
@@ -49,6 +58,6 @@ def initialisation_pipeline():
     populate_community_areas = load_community_area_dim(psql_comm_area_table,
                                                        psql_trip_db_conn_str)
     
-    create_date_dim >> create_psql_tables >> populate_community_areas
+    drop_tables >> create_date_dim >> create_psql_tables >> populate_community_areas
 
 initialisation_pipeline()

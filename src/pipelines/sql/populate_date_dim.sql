@@ -1,6 +1,4 @@
-DROP TABLE if exists {{ params.psql_date_dim_table }};
-
-CREATE TABLE {{ params.psql_date_dim_table }}
+CREATE TABLE IF NOT EXISTS {{ params.psql_date_dim_table }}
 (
   date_dim_id              INT NOT NULL,
   date_actual              DATE NOT NULL,
@@ -33,9 +31,9 @@ CREATE TABLE {{ params.psql_date_dim_table }}
   weekend_indr             BOOLEAN NOT NULL
 );
 
-ALTER TABLE {{ params.psql_date_dim_table }} ADD CONSTRAINT {{ params.psql_date_dim_table }}_date_dim_id_pk PRIMARY KEY (date_dim_id);
+ALTER TABLE {{ params.psql_date_dim_table }} ADD CONSTRAINT {{params.psql_date_dim_table}}_date_dim_id_pk PRIMARY KEY (date_dim_id);
 
-CREATE INDEX d_date_date_actual_idx
+CREATE INDEX IF NOT EXISTS d_date_date_actual_idx
   ON {{ params.psql_date_dim_table }}(date_actual);
 
 COMMIT;
@@ -81,6 +79,7 @@ SELECT TO_CHAR(datum, 'yyyymmdd')::INT AS date_dim_id,
 FROM (SELECT '2010-01-01'::DATE + SEQUENCE.DAY AS datum
       FROM GENERATE_SERIES(0, 29219) AS SEQUENCE (DAY)
       GROUP BY SEQUENCE.DAY) DQ
-ORDER BY 1;
+ORDER BY 1
+ON CONFLICT (date_dim_id) DO NOTHING;
 
 COMMIT;
