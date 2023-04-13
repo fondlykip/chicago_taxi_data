@@ -1,15 +1,14 @@
 from typing import Union
 from fastapi import FastAPI
-from .psql_database import psqlBase
+from .psql_database import psqlBase, psqlApp
+from .mongo_database import mongoApp
 
 app = FastAPI()
+app.mount("/api/psql", psqlApp)
+app.mount("/api/mongo", mongoApp)
 
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return "See localhost:9001/docs for more info"
 
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}

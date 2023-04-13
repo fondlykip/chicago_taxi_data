@@ -179,3 +179,64 @@ def drop_mongo_collection_task(mongo_conn,
         mongo_db.drop_collection(mongo_coll)
     except InvalidName:
         LOGGER.info(f'No Database found with name {mongo_db_name}')
+
+@task
+def export_psql(psql_conn,
+                table_name,
+                data_bucket):
+    engine = create_engine(psql_conn)
+    dump_path = f"/{data_bucket}/dumps/psql/"
+    dump_csv_filename = "trip_dump.csv"
+    dump_json_filename = "trip_dump.json"
+    tmp_csv_filename = "tmp_trip_dump.csv"
+    tmp_json_filename = "tmp_trip_dump.json"
+    dump_csv_filepath = os.path.join(dump_path, dump_csv_filename)
+    dump_json_filepath = os.path.join(dump_path, dump_json_filename)
+    tmp_csv_filepath = os.path.join(dump_path, tmp_csv_filename)
+    tmp_json_filepath = os.path.join(dump_path, tmp_json_filename)
+    os.makedirs(dump_path, exist_ok=True)
+    for pth in [tmp_csv_filepath, tmp_json_filepath]:
+        if os.path.exists(pth):
+            os.remove(pth)
+    query = f"SELECT * FROM {table_name}"
+    df = pd.read_sql_query(query, con=engine)
+    df.to_csv(tmp_csv_filepath)
+    df.to_json(tmp_json_filepath, orient='records')
+    for pth in [dump_csv_filepath, dump_json_filepath]:
+        if os.path.exists(pth):
+            os.remove(pth)
+    os.rename(tmp_json_filepath, dump_json_filepath)
+    os.rename(tmp_csv_filepath, dump_csv_filepath)
+    LOGGER.info(f'psql successfully dumped to {dump_csv_filepath}, {dump_json_filepath}')
+
+@task
+def export_mongo(mongo_conn,
+                 mongo_coll,
+                 mongo_db,
+                 data_bucket):
+    dump_path = f"/{data_bucket}/dumps/mongo/"
+    dump_csv_filename = "trip_dump.csv"
+    dump_json_filename = "trip_dump.json"
+    tmp_csv_filename = "tmp_trip_dump.csv"
+    tmp_json_filename = "tmp_trip_dump.json"
+    dump_csv_filepath = os.path.join(dump_path, dump_csv_filename)
+    dump_json_filepath = os.path.join(dump_path, dump_json_filename)
+    tmp_csv_filepath = os.path.join(dump_path, tmp_csv_filename)
+    tmp_json_filepath = os.path.join(dump_path, tmp_json_filename)
+    os.makedirs(dump_path, exist_ok=True)
+    for pth in [tmp_csv_filepath, tmp_json_filepath]:
+        if os.path.exists(pth):
+            os.remove(pth)
+    mongo_hook = MongoHook(mongo_conn)
+    mongo_db = Database(mongo_hook.get_conn(),
+                        mongo_db) 
+    cursor = mongo_db[mongo_coll].find()
+    df = pd.DataFrame(list(cursor))
+    df.to_csv(tmp_csv_filepath)
+    df.to_json(tmp_json_filepath, orient='records')
+    for pth in [dump_csv_filepath, dump_json_filepath]:
+        if os.path.exists(pth):
+            os.remove(pth)
+    os.rename(tmp_json_filepath, dump_json_filepath)
+    os.rename(tmp_csv_filepath, dump_csv_filepath)
+    LOGGER.info(f'Mongo successfully dumped to {dump_csv_filepath}, {dump_json_filepath}')
