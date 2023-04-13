@@ -4,20 +4,16 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi import FastAPI, Depends
 import os
-from typing import List, Iterator, Any
-#from fastapi_pagination import LimitOffsetPage, Page, add_pagination
-#from fastapi_pagination.ext.sqlalchemy import paginate
+from typing import List
 from sqlalchemy import (Column,
                         ForeignKey,
                         Integer,
                         String,
                         DateTime,
                         Float,
-                        Time, Numeric)
+                        Time)
 from geoalchemy2 import Geometry
-from datetime import datetime
-from geojson_pydantic.geometries import Point
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 PSQL_TRIP_DB_CONN_STR="postgresql://postgres:pass@postgres_db:5432/chicago_taxi_trips"
 
@@ -29,7 +25,7 @@ psqlBase = declarative_base()
 psqlApp = FastAPI()
 
 def get_db():
-    db = SessionLocal()
+    db = Session(engine)
     try:
         yield db
     finally:
@@ -65,50 +61,17 @@ class TaxiModel(psqlBase):
     dropoff_centroid_latitude = Column(Float)
     dropoff_centroid_longitude = Column(Float)
     dropoff_centroid_location =Column(Geometry('POINT'))
-
-class CommunityAreasModel(psqlBase):
-    __tablename__='community_area_dim'
-    community_area_id = Column(Integer, primary_key=True)
-    community_area_name = Column(String)
-    community_area_size = Column(Float)
-
-class TripSchema(BaseModel):
-    trip_id: str
-    taxi_id: str
-    trip_start_timestamp: datetime
-    trip_end_timestamp: datetime
-    trip_seconds: int
-    trip_miles: float
-    pickup_census_tract: str
-    dropoff_census_tract: str
-    pickup_community_area: int
-    dropoff_community_area: int
-    fare: float
-    tips: float
-    tolls: float
-    extras: float
-    trip_total: float
-    payment_type: str
-    company: str
-    pickup_centroid_latitude: float
-    pickup_centroid_longitude: float
-    pickup_centroid_location: Point
-    dropoff_centroid_latitude: float
-    dropoff_centroid_longitude: float
-    dropoff_centroid_location: Point
-
-    class Congif:
-        orm_mode=True
     
-class CommunityAreaSchema(BaseModel):
-    community_area_id: int
-    community_area_name: str
-    community_area_size: int
 
-    class Congif:
+class CompanySummarySchema(BaseModel):
+    company: str#  = Field(...)
+    total_trips: int#  = Field(...)
+    total_fare: float#  = Field(...)
+
+    class Config:
         orm_mode=True
 
-@psqlApp.get('/company_summary', response_model=List[TripSchema])
+@psqlApp.get('/company_summary', response_model=List[CompanySummarySchema])
 def get_company_summary(db: Session = Depends(get_db)):
     return    db.query(TaxiModel.company,
                        func.count(TaxiModel.trip_id).label('total_trips'), 

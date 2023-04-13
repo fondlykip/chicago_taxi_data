@@ -1,17 +1,15 @@
 import os
-from fastapi import FastAPI, Body, HTTPException, status
-from fastapi.responses import Response, JSONResponse
-from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, Field, EmailStr
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
 from bson import ObjectId
 from geojson_pydantic.geometries import Point
-from typing import Optional, List
+from typing import List
 import datetime
 import motor.motor_asyncio
 
 mongoApp = FastAPI()
 client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGO_CONN_STR"])
-db = client.chicago_taxi_trips_collection
+db = client.chicago_taxi_trips_database
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -58,10 +56,23 @@ class TripModel(BaseModel):
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
 
-@mongoApp.get('/trips/csv')
-def return_trips_as_csv():
-    pass
+class CompanySummaryModel(BaseModel):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    total_trips: int = Field(...)
+    total_fare: float = Field(...)
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
 
-@mongoApp.get('/trips/json')
-def return_trips_as_json():
-    pass
+@mongoApp.get('/company_summary', 
+              response_model=List[CompanySummaryModel])
+async def return_trips_as_csv():
+    pipeline = [{"$group": 
+                        {"_id": "$company",
+                         "total_trips": {"$sum": 1},
+                         "total_fair": {"$sum": "$total_fare"}}
+                }]
+    companies = await db.chicago_taxi_trips_collection.aggregate(pipeline).to_list(1000)
+    return companies
+
