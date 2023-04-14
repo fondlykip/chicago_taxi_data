@@ -1,5 +1,15 @@
 version: '3.8'
 services: 
+
+  change-vol-ownership:
+    image: ubuntu
+    user: "root"
+    group_add:
+      - '50000'
+    volumes:
+      - remote-storage:/remote-storage:z
+    command: chown -R 50000:50000 /remote-storage
+
   airflow_meta_db:
     image: postgres
     environment:
@@ -7,6 +17,8 @@ services:
       - POSTGRES_PASSWORD=airflow
       - META_DB=airflow
     container_name: airflow_meta_db
+    depends_on:
+      - change-vol-ownership
     networks:
       - ctdnet
 
@@ -22,7 +34,7 @@ services:
     volumes:
       - ${PWD}/src/pipelines:/opt/airflow/dags:z
       - airflow-logs:/opt/airflow/logs:z
-      - ${PWD}/remote-storage:/remote-storage:z
+      - remote-storage:/remote-storage:z
     container_name: airflow_scheduler
     networks:
       - ctdnet
@@ -40,7 +52,7 @@ services:
       - ${PWD}/src/pipelines:/opt/airflow/dags:z
       - airflow-logs:/opt/airflow/logs:z
       - ${PWD}/docker/web_server/scripts:/opt/airflow/scripts
-      - ${PWD}/remote-storage:/remote-storage:z
+      - remote-storage:/remote-storage:z
     ports:
       - "8080:8080"
     container_name: airflow_webserver
@@ -58,7 +70,7 @@ services:
       - ${PWD}/data/postgres/data:/var/lib/postgres/data
       - ${PWD}/data/postgres/scripts:/var/lib/postgres/scripts
       - ${PWD}/data/postgres/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ${PWD}/remote-storage:/remote-storage
+      - remote-storage:/remote-storage:z
     container_name: postgres_db
     networks:
       - ctdnet
@@ -74,7 +86,7 @@ services:
     volumes:
       - ${PWD}/data/mongo/data:/data/db
       - ${PWD}/data/mongo/scripts:/scripts
-      - ${PWD}/remote-storage:/remote-storage
+      - remote-storage:/remote-storage:z
     container_name: mongo_db
     networks:
       - ctdnet
@@ -86,13 +98,14 @@ services:
     ports:
       - "9001:9001"
     volumes:
-      - ${PWD}/remote-storage:/remote-storage
+      - remote-storage:/remote-storage:z
     container_name: app_server
     networks:
       - ctdnet
 
 volumes:
   airflow-logs:
+  remote-storage:
 
 networks:
   ctdnet:

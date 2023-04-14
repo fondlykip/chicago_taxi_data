@@ -6,6 +6,7 @@ from geojson_pydantic.geometries import Point
 from typing import List, Optional
 import datetime
 import motor.motor_asyncio
+import numpy as np
 
 mongoApp = FastAPI()
 client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGO_CONN_STR"])
@@ -59,12 +60,13 @@ class TripModel(BaseModel):
 class CompanySummaryModel(BaseModel):
     id: Optional[str] = Field(default_factory=str, alias="_id")
     total_trips: int = Field(...)
-    total_fare: Optional[float]
+    total_fare: Optional[float] = Field(...)
     class Config:
         allow_population_by_field_name = True
         
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+        json_encoders = {ObjectId: str,
+                         float: str}
         schema_extra = {
             "example": {
                 "company": 'taxicab',
@@ -78,7 +80,7 @@ async def return_trips_as_csv():
     pipeline = [{"$group": 
                         {"_id": "$company",
                          "total_trips": {"$sum": 1},
-                         "total_fair": {"$sum": "$trip_total"}}
+                         "total_fare": {"$sum": "$trip_total"}}
                 }]
     companies = await db.chicago_taxi_trips_collection.aggregate(pipeline).to_list(1000)
     return companies

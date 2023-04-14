@@ -6,6 +6,8 @@ from airflow.models.param import Param
 from airflow.decorators import dag, task
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.mongo.hooks.mongo import MongoHook
+from airflow.operators.bash import BashOperator 
+
 
 from etl_tasks import (clear_down_processed_files_task,
                        load_taxi_trips_mongo_task,
@@ -143,11 +145,10 @@ test_mongo_drop_pipeline()
     start_date=datetime(2023, 1, 1),
     schedule=None
 )
-def test_scheduling():
-    @task
-    def test_task():
-        LOGGER.info(f'This is a test, run at {datetime.now()}')
-    
-    test_task()
+def test_writing():
+    BashOperator(
+        task_id='write_out',
+        bash_command="mkdir /remote-storage/test-dr/"
+    )
 
-test_scheduling()
+test_writing()
