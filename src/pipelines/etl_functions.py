@@ -139,6 +139,17 @@ def format_taxi_df_to_records(raw_df: pd.DataFrame()):
     point_cols = ['pickup_centroid_location', 'dropoff_centroid_location']
     LOGGER.info(f'Data reformatting successful')
     raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
+    type_maps = [('trip_miles', 'float64'), ('fare', 'float64'),
+                 ('tips', 'float64'), ('tolls', 'float64'),
+                 ('extras','float64'), ('trip_total', 'float64'),
+                 ('pickup_community_area', 'int64'),
+                 ('dropoff_community_area', 'int64'),
+                 ('pickup_centroid_latitude', 'float64'),
+                 ('pickup_centroid_longitude', 'float64'),
+                 ('dropoff_centroid_latitude', 'float64'),
+                 ('dropoff_centroid_longitude', 'float64')]
+    for map in type_maps:
+        raw_df[map[0]] = raw_df[map[0]].astype(map[1], errors='ignore')
     records = raw_df.to_dict(orient='records')
     for record in records:
         for col in point_cols:

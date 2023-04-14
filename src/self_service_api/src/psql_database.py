@@ -2,7 +2,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql.expression import func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from fastapi import FastAPI, Depends
+from sqlalchemy.exc import ProgrammingError
+from fastapi import FastAPI, Depends, HTTPException
 import os
 from typing import List
 from sqlalchemy import (Column,
@@ -73,7 +74,12 @@ class CompanySummarySchema(BaseModel):
 
 @psqlApp.get('/company_summary', response_model=List[CompanySummarySchema])
 def get_company_summary(db: Session = Depends(get_db)):
-    return    db.query(TaxiModel.company,
-                       func.count(TaxiModel.trip_id).label('total_trips'), 
-                       func.sum(TaxiModel.trip_total).label('total_fare')).\
-                 group_by(TaxiModel.company).all()
+    try:
+        return db.query(TaxiModel.company,
+                        func.count(TaxiModel.trip_id).label('total_trips'), 
+                        func.sum(TaxiModel.trip_total).label('total_fare')).\
+                  group_by(TaxiModel.company).all()
+    except ProgrammingError as e:
+        raise HTTPException(status_code=400,
+                            detail=f"Failed to run query: {e}"   )
+

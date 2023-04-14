@@ -116,10 +116,14 @@ test_mongo_db_pipeline()
     schedule=None
 )
 def test_mongo_insert_pipeline():
-    load_taxi_trips_mongo_task(['/remote-storage/wrvz-psew/test/005473c667174bd5b3b172eb311f8181-0.parquet'],
+    drop = drop_mongo_collection_task('mongo_prd',
+                               'test_trips_db',
+                               'test_trips')
+    load = load_taxi_trips_mongo_task(['/remote-storage/test/f29b5058b4654095b810ddd96ab5ba1b-0.parquet'],
                                'mongo_prd',
                                'test_trips',
                                'test_trip_db')
+    drop >> load
 test_mongo_insert_pipeline()
 
 

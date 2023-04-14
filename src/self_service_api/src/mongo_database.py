@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from bson import ObjectId
 from geojson_pydantic.geometries import Point
-from typing import List
+from typing import List, Optional
 import datetime
 import motor.motor_asyncio
 
@@ -57,21 +57,28 @@ class TripModel(BaseModel):
         json_encoders = {ObjectId: str}
 
 class CompanySummaryModel(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    id: Optional[str] = Field(default_factory=str, alias="_id")
     total_trips: int = Field(...)
-    total_fare: float = Field(...)
+    total_fare: Optional[float]
     class Config:
         allow_population_by_field_name = True
+        
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+        schema_extra = {
+            "example": {
+                "company": 'taxicab',
+                "total_trips": "100",
+                "total_fare": "24.96"
+            }
+        }
 
-@mongoApp.get('/company_summary', 
-              response_model=List[CompanySummaryModel])
+@mongoApp.get('/company_summary', response_model=List[CompanySummaryModel])
 async def return_trips_as_csv():
     pipeline = [{"$group": 
                         {"_id": "$company",
                          "total_trips": {"$sum": 1},
-                         "total_fair": {"$sum": "$total_fare"}}
+                         "total_fair": {"$sum": "$trip_total"}}
                 }]
     companies = await db.chicago_taxi_trips_collection.aggregate(pipeline).to_list(1000)
     return companies
