@@ -1,14 +1,25 @@
 # chicago_taxi_data
 A small POC Project to extract data from the Chicago Taxi Trips public data set and load it into SQL and a NoSQL Databases, exposing results via an API.
 
-## Accessing the Repo
+# Table of Contents
+1. [Accessing the Repo](#repo_access)
+2. [Project Overview](#overview)
+3. [Running the Solution](#run_solution)
+    1. [Start the Containers](#start_containers)
+    2. [Log into Airflow](#airflow_login)
+    3. [Run the Pipelines](#run_pipelines)
+    4. [Accessing Results](#access_api)
+    5. [API Summary](#api_summary)
+    6. [Clean Up](#clean_up)
+
+## Accessing the Repo <a name="repo_access"></a>
 As it is configured to be private, to clone this repo you will need to share an ssh public key with me. I will then add this to the repo to allow access. 
 
 Instructions on how to create new keys can be found [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 
 With a new key created, copy the contents of the `<key-name>.pub` file to a text file and send it via email to liam.j.campbell@hotmail.co.uk
 
-# Project Overview
+# Project Overview <a name="overview"></a>
 This project implements the following Architecure:
 
 ![Solution Architecture](img/CTD_Architecture.jpg "Architectural Overview")
@@ -65,14 +76,14 @@ Unit tests for some of the functions in `src/pipelines/etl_functions.py` are ava
 sh ./run_tests.sh
 ```
 
-# Running the Solution
+# Running the Solution <a name="run_solution"></a>
 To run the solution and return some results from the API we must:
  - Start the containers
  - Run Initialisation Pipeline in Airflow
  - Run ETL Pipeline in Airflow
  - Make a call to the API
 
-## Start the Containers
+## Start the Containers <a name="start_containers"></a>
 In order to start the containers for each service, with your terminal in the root directory of this repo, run the following command:
 
 ```bash
@@ -81,7 +92,7 @@ docker compose up
 
 Adding the `-d` flag to this command will limit the output generated and force docker to run in the background
 
-## Log into Airflow UI
+## Log into Airflow UI <a name="airflow_login"></a>
 With the containers started, we can log into Airflow via the Web UI, available on start up at the following URL:
 
 ```
@@ -92,7 +103,7 @@ It may take a minute for the Web UI to be fully up and running.
 
 For this PoC, the username and password for airflow are simply `admin`, though this should of course be changed in production.
 
-## Run the Pipeines
+## Run the Pipeines <a name="run_pipelines"></a>
 In the Airflow UI, on the DAGs Page, you should be able to see a few pipelines, the primary ones we are concerned with are; 
 - `initialisation_pipeline`
 - `taxi_trips_etl_pipeline`.
@@ -113,9 +124,9 @@ This pipeline can be configured to load data for any given month in a given year
 
 The ETL Pipeline, for a single month, typically takes around 5 minutes to run.
 
-## Accessing Results
+## Accessing Results <a name="access_api"></a>
 
-With the pipelines successfully run, we can now make a call to the API to get results.
+With both the pipelines having successfully run, we can now make a call to the API to get results.
 
 The main URL of the API is
 
@@ -131,7 +142,7 @@ Here, there are a few endpoints we can use:
 
 Documentation about available methods for each end point can be found by appending `/docs` to the end of each URL above.
 
-### API Summary
+### API Summary <a name="api_summary"></a>
 To bulk dump PSQL data:
 
 ```
@@ -160,6 +171,7 @@ localhost:9001/api/psql/company_summary
 
 This endpoint will return total fare and total number of trips per taxi company listed in the dataset.
 
+## Clean Up <a name="clean_up"></a>
 When you are done running the pipelines and accessing the APIs, the docker containers can be stopped by running the following command in the terminal;
 
 ```bash
