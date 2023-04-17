@@ -2,7 +2,7 @@
 A small POC Project to extract data from the Chicago Taxi Trips public data set and load it into SQL and a NoSQL Databases, exposing results via an API.
 
 ## Accessing the Repo
-As it is configured as private, to clone this repo you will need to share an ssh public key with me. I will then add this to the repo to allow access. 
+As it is configured to be private, to clone this repo you will need to share an ssh public key with me. I will then add this to the repo to allow access. 
 
 Instructions on how to create new keys can be found [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 
@@ -13,7 +13,17 @@ This project implements the following Architecure:
 
 ![Solution Architecture](img/CTD_Architecture.jpg "Architectural Overview")
 
-The services for each aspect of the diagram above are all built and managed by the `docker-compose.yaml` file found in the root of the repository.
+The tools implemented in each layer are
+- The Processing/ Orchestration layer
+  - Airflow
+- The Storage Layer
+  - MongoDB
+  - PSQL
+  - Remote Storage via Docker Volume
+- The Serving Layer
+  - API built with FastAPI
+
+The services for each layer are all built and managed by the `docker-compose.yaml` file found in the root of the repository.
 
 In this file we define the following containers:
  - `airflow_meta_db`: Host for Airflow's PostgreSQL backend database
@@ -25,12 +35,12 @@ In this file we define the following containers:
 
 We also define 2 Docker managed volumes, one for airflow's logs, and one for the 'remote-storage' volume, which for the sake of this exercise will act as a proxy to cloud storage solutions.
 
-Most images are simply based of one of the available standard Docker base images. However, for the Airflow Schedular, Web Server, and the app_service API host, Dockerfiles have also been included to give a little more configuration where needed.
+Most images are simply based off of standard Docker base images. However, for the Airflow Schedular, Web Server, and the app_service API host, Dockerfiles have also been included to give a little more configuration where needed.
 
 The Dockerfiles for these services can be found at:
- - airflow_scheduler: `./docker/scheduler/Dockerfile`
- - airflow_webservice: `./docker/web_server/Dockerfile`
- - app_server: `./src/self_service_api/Dockerfile`
+ - airflow_scheduler: `docker/scheduler/Dockerfile`
+ - airflow_webservice: `docker/web_server/Dockerfile`
+ - app_server: `src/self_service_api/Dockerfile`
 
 All code for the Airflow pipelines can be found in `src/pipelines/`:
  - `sql/` - Files containing SQL code for PSQL
@@ -45,7 +55,7 @@ Code for the self service API can be found in `src/self_service_api/`:
   - `src/psql_database.py` - API for Querying summary statitics from PSQL
   - `src/psql_database.py` - API for Querying summary statitics
 
-Unit tests for some of the functions in `src/pipelines/etl_functions.py` are available in `./test/unit/test_etl_functions.py`. To run the tests, execute the `run_tests.sh` file from the root of the repo like so:
+Unit tests for some of the functions in `src/pipelines/etl_functions.py` are available in `test/unit/test_etl_functions.py`. To run the tests, execute the `run_tests.sh` file from the root of the repo like so:
 
 ```bash
 sh ./run_tests.sh
