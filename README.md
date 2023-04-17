@@ -3,7 +3,7 @@ A small POC Project to extract data from the Chicago Taxi Trips public data set 
 
 This project implements the following Architecure:
 
-![Solution Architecture](CTD_Architecture.jpg "Architectural Overview")
+![Solution Architecture](img/CTD_Architecture.jpg "Architectural Overview")
 
 The services for each aspect of the diagram above are all built and managed by the `docker-compose.yaml` file found in the root of the repository.
 
@@ -73,11 +73,11 @@ First we must run the initialisation pipeline to ensure all necessary tables and
 
 To start a pipeline, click the 'Play' button inline with the pipeline name, on the right hand side listed under 'Actions'
 
-![Run the Pipeline](run_button.PNG)
+![Run the Pipeline](img/run_button.PNG)
 
 This pipeline should take a few seconds to run. When it completes, you should see a green circle in line with the pipeline name, under the heading 'Runs', Like so;
 
-![Great Success!](run_success.PNG)
+![Great Success!](img/run_success.PNG)
 
 With this initialisation pipeline complete, we can now execute the Taxi Trips ETL Pipeline.
 
