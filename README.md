@@ -55,6 +55,10 @@ Code for the self service API can be found in `src/self_service_api/`:
   - `src/psql_database.py` - API for Querying summary statitics from PSQL
   - `src/psql_database.py` - API for Querying summary statitics
 
+Initialisation scripts for each database can be found under  
+- `data/psql/scripts`
+- `data/mongo/scripts`
+
 Unit tests for some of the functions in `src/pipelines/etl_functions.py` are available in `test/unit/test_etl_functions.py`. To run the tests, execute the `run_tests.sh` file from the root of the repo like so:
 
 ```bash
