@@ -1,6 +1,14 @@
 # chicago_taxi_data
 A small POC Project to extract data from the Chicago Taxi Trips public data set and load it into a SQL and a NoSQL Database.
 
+## Accessing the Repo
+As it is configured as private, to clone this repo you will need to share an ssh public key with me. I will then add this to the repo to allow access. 
+
+Instructions on how to create new keys can be found [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+
+With a new key created, copy the contents of the `<key-name>.pub` file to a text file and send it via email to liam.j.campbell@hotmail.co.uk
+
+# Project Overview
 This project implements the following Architecure:
 
 ![Solution Architecture](img/CTD_Architecture.jpg "Architectural Overview")
@@ -62,7 +70,9 @@ Adding the `-d` flag to this command will limit the output generated and force d
 ## Log into Airflow UI
 With the containers started, we can log into Airflow via the Web UI, available on start up at the following URL:
 
-```localhost:8080```
+```
+localhost:8080
+```
 
 It may take a minute for the Web UI to be fully up and running. 
 
@@ -85,7 +95,7 @@ This pipeline should take a few seconds to run. When it completes, you should se
 
 With this initialisation pipeline complete, we can now execute the Taxi Trips ETL Pipeline.
 
-This pipeline can be configured to load data for any given month in a given year, or backfill from this date to present. Without any additional configuration, the pipeline will simply load data for January 2023.
+This pipeline can be configured to load data for any given month in a given year, or backfill from the given month to present. Without any additional configuration, the pipeline will simply load data for January 2023.
 
 The ETL Pipeline, for a single month, typically takes around 5 minutes to run.
 
@@ -95,7 +105,9 @@ With the pipelines successfully run, we can now make a call to the API to get re
 
 The main URL of the API is
 
-```localhost:9001```
+```
+localhost:9001
+```
 
 Here, there are a few endpoints we can use:
 
@@ -108,15 +120,29 @@ Documentation about available methods for each end point can be found by appendi
 ### API Summary
 To bulk dump PSQL data:
 
-```localhost:9001/dump/psql/csv``` or ```localhost:9001/dump/psql/json```
+```
+localhost:9001/dump/psql/csv
+```
+or
+```
+localhost:9001/dump/psql/json
+```
 
 To bulk dump Mongo data:
 
-```localhost:9001/dump/mongo/csv``` or ```localhost:9001/dump/mongo/json```
+```
+localhost:9001/dump/mongo/csv
+```
+ or 
+```
+localhost:9001/dump/mongo/json
+```
 
 each of the URLs `/api/psql` and `/api/mongo` have a `company_summary` endpoint that can be accessed like so;
 
-```localhost:9001/api/psql/company_summary```
+```
+localhost:9001/api/psql/company_summary
+```
 
 This endpoint will return total fare and total number of trips per taxi company listed in the dataset.
 
