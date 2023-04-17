@@ -75,6 +75,11 @@ Unit tests for some of the functions in `src/pipelines/etl_functions.py` are ava
 ```bash
 sh ./run_tests.sh
 ```
+you may get a permissions error when trying to run the file, in which case, use the chown command to add executability permissions:
+
+```bash
+chown -x ./run_tests.sh
+```
 
 # Running the Solution <a name="run_solution"></a>
 To run the solution and return some results from the API we must:
