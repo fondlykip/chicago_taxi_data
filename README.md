@@ -20,9 +20,9 @@ We also define 2 Docker managed volumes, one for airflow's logs, and one for the
 Most images are simply based of one of the available standard Docker base images. However, for the Airflow Schedular, Web Server, and the app_service API host, Dockerfiles have also been included to give a little more configuration where needed.
 
 The Dockerfiles for these services can be found at:
- - airflow_scheduler: docker/scheduler/Dockerfile
- - airflow_webservice: docker/web_server/Dockerfile
- - app_server: src/self_service_api/Dockerfile
+ - airflow_scheduler: `./docker/scheduler/Dockerfile`
+ - airflow_webservice: `./docker/web_server/Dockerfile`
+ - app_server: `./src/self_service_api/Dockerfile`
 
 All code for the Airflow pipelines can be found in `src/pipelines/`:
  - `sql/` - Files containing SQL code for PSQL
@@ -40,7 +40,7 @@ Code for the self service API can be found in `src/self_service_api/`:
 Unit tests for some of the functions in `src/pipelines/etl_functions.py` are available in `./test/unit/test_etl_functions.py`. To run the tests, execute the `run_tests.sh` file from the root of the repo like so:
 
 ```bash
-./run_tests.sh
+sh ./run_tests.sh
 ```
 
 # Running the Solution
@@ -120,7 +120,7 @@ each of the URLs `/api/psql` and `/api/mongo` have a `company_summary` endpoint 
 
 This endpoint will return total fare and total number of trips per taxi company listed in the dataset.
 
-When you are done running pipelines, the docker containers can be stopped by running the following command in the terminal;
+When you are done running the pipelines and accessing the APIs, the docker containers can be stopped by running the following command in the terminal;
 
 ```bash
 docker compose down --volumes
