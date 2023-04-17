@@ -31,7 +31,16 @@ LOGGER = logging.getLogger(__name__)
     render_template_as_native_obj=True
 )
 def taxi_trips_etl_pipeline():
-    """ DAG Definition for ETL Pipeline """
+    """
+    DAG Definition for ETL Pipeline.
+    This pipeline performs the following steps:
+        1 - create staging tables for landing data to.
+        2 - Query Chicago City Data Portal for Taxi Trip Data.
+        3 - Load extracted data to PSQL and Mongo Databases.
+        4 - Export updated tables to csv and JSON for serving
+            API requests.
+        5 - Clear down unnecessary tables after completion.
+    """
 
     year = "{{params.year}}"
     month = "{{params.month}}"
@@ -54,12 +63,12 @@ def taxi_trips_etl_pipeline():
 
     extracted_files = extract_taxi_trips_task(year, month,
                                               backfill, dataset_code,
-                                              data_bucket, Variable.get('chicago_app_token'))
+                                              data_bucket)
 
     load_taxi_trips_postgres = load_taxi_trips_postgres_task(extracted_files,
                                                              psql_staging_table,
                                                              Variable.get('psql_trip_db_conn_str'))
-    
+
     load_taxi_trips_mongo = load_taxi_trips_mongo_task(extracted_files,
                                                        'mongo_prd',
                                                        mongo_collection,

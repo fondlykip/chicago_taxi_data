@@ -1,4 +1,6 @@
-""" Airflow Pipeline to perform ETL Workflow for taxi trip data application """
+"""
+Airflow Pipeline file to run small test DAGs for Development purposes
+"""
 from datetime import datetime
 import logging
 from airflow.models import Variable, Connection

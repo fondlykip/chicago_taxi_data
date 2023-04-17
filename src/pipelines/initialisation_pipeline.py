@@ -8,11 +8,11 @@ from etl_tasks import (
     load_community_area_dim,
     drop_mongo_collection_task
 )
-    
+
 LOGGER = logging.getLogger(__name__)
 
 @dag(
-    start_date = datetime(2023, 1, 1),
+    start_date=datetime(2023, 1, 1),
     schedule=None,
     render_template_as_native_obj=True,
     catchup=False,
@@ -26,7 +26,12 @@ LOGGER = logging.getLogger(__name__)
     }
 )
 def initialisation_pipeline():
-    """ DAG Definition for initialisation Pipeline """
+    """
+    DAG Definition for initialisation Pipeline.
+    This pipeline runs a sequence of actions that tear down the databases if they exist,
+    and then rebuilds them.
+    """
+
     psql_date_dim_table = "{{params.psql_date_dim_table}}"
     psql_trip_fact_table = "{{params.psql_trip_fact_table}}"
     psql_comm_area_table = "{{params.psql_comm_area_table}}"
@@ -59,14 +64,14 @@ def initialisation_pipeline():
         postgres_conn_id='psql_trip_db_conn',
         sql='sql/create_prd_tbl.sql',
         parameters={"psql_trip_fact_table": psql_trip_fact_table,
-                   "psql_comm_area_table": psql_comm_area_table,
-                   "psql_date_dim_table": psql_date_dim_table},
+                    "psql_comm_area_table": psql_comm_area_table,
+                    "psql_date_dim_table": psql_date_dim_table},
         retries=1
     )
 
     populate_community_areas = load_community_area_dim(psql_comm_area_table,
                                                        psql_trip_db_conn_str)
-    
+
     drop_tables >> create_date_dim >> create_psql_tables >> populate_community_areas
     drop_mongo_collection
 initialisation_pipeline()

@@ -1,3 +1,4 @@
+"Module containing the logic for the PSQL Analysis API"
 from sqlalchemy import create_engine
 from sqlalchemy.sql.expression import func
 from sqlalchemy.ext.declarative import declarative_base
@@ -26,6 +27,7 @@ psqlBase = declarative_base()
 psqlApp = FastAPI()
 
 def get_db():
+    "Create a DB Session with PSQL"
     db = Session(engine)
     try:
         yield db
@@ -33,6 +35,10 @@ def get_db():
         db.close()
     
 class TaxiModel(psqlBase):
+    """
+    Model for validating the schema of queries to the 
+    Taxi trip data stored in PSQL
+    """
     __tablename__ = "chicago_taxi_trips_fact"
     
     trip_id = Column(String, primary_key=True, )
@@ -65,15 +71,22 @@ class TaxiModel(psqlBase):
     
 
 class CompanySummarySchema(BaseModel):
-    company: str#  = Field(...)
-    total_trips: int#  = Field(...)
-    total_fare: float#  = Field(...)
+    """
+    Model for defining the output 
+    schema from the company summary API Call
+    """
+    company: str
+    total_trips: int
+    total_fare: float
 
     class Config:
         orm_mode=True
 
 @psqlApp.get('/company_summary', response_model=List[CompanySummarySchema])
 def get_company_summary(db: Session = Depends(get_db)):
+    """
+    GET Method for Querying the total number of trips and total fee earned per Taxi Affiliation
+    """
     try:
         return db.query(TaxiModel.company,
                         func.count(TaxiModel.trip_id).label('total_trips'), 

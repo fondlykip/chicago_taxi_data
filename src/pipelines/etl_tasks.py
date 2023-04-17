@@ -4,16 +4,17 @@ import os
 import shutil
 import pandas as pd
 from sqlalchemy import create_engine
+from airflow.decorators import task
+from airflow.models import Variable
+from airflow.providers.mongo.hooks.mongo import MongoHook
+from pymongo.database import Database
+from pymongo.errors import InvalidName
 from etl_functions import (query_chicago_data,
                            generate_query,
                            convert_point_cols,
                            list_files,
                            format_taxi_df_to_records,
                            format_community_area_data)
-from airflow.decorators import task
-from airflow.providers.mongo.hooks.mongo import MongoHook
-from pymongo.database import Database
-from pymongo.errors import InvalidName
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,8 +24,7 @@ def extract_taxi_trips_task(year,
                             month,
                             backfill,
                             dataset_code,
-                            data_bucket,
-                            app_token) -> list:
+                            data_bucket) -> list:
     """
     Task to query data from Taxi Trip API and load into Staging Table
     Args:
@@ -34,11 +34,11 @@ def extract_taxi_trips_task(year,
                     (Query data since <year>/<month>) or regular mode
                     (Query data for <year>/<month>)
         - data_bucket: remote storage bucket in which to store resulting parquet files
-        - app_token: token for authenticating API Requests
     Returns:
         - produced_files: a list of files found in the raw folder in the remote storage
                           after extraction has completed.
     """
+    app_token = Variable.get('chicago_app_token')
     filter_col = 'trip_start_timestamp'
     query = generate_query(backfill, year, month, filter_col)
     results_df = query_chicago_data(query=query,
@@ -131,9 +131,10 @@ def load_taxi_trips_mongo_task(files_to_load: list,
                                  engine='pyarrow')
         raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
         raw_df = raw_df.loc[~raw_df['_id'].isin(loaded_ids)]
-        if raw_df.shape[0] !=0:
+        if raw_df.shape[0] != 0:
             records = format_taxi_df_to_records(raw_df)
-            LOGGER.info(f'insert {len(records)} rows into collection {mongo_coll}, in db {mongo_db}')
+            LOGGER.info(
+                f'insert {len(records)} rows into collection {mongo_coll}, in db {mongo_db}')
             mongo_hook.insert_many(mongo_coll, records, mongo_db, ordered=False)
             loaded_ids.extend(raw_df['_id'].values)
             count += 1
@@ -184,6 +185,14 @@ def drop_mongo_collection_task(mongo_conn,
 def export_psql_task(psql_conn,
                      table_name,
                      data_bucket):
+    """
+    Airflow task to Query PSQL and load the result to a CSV and a JSON file in
+    the remote storage.
+    Args:
+        - psql_conn: Name of the connection with which to connect to psql db
+        - table_name: Table in psql to query for export
+        - data_bucket: remote storage bucket in which to save export
+    """
     engine = create_engine(psql_conn)
     dump_path = f"/{data_bucket}/dumps/psql/"
     dump_csv_filename = "trip_dump.csv"
@@ -214,6 +223,15 @@ def export_mongo_task(mongo_conn,
                       mongo_coll,
                       mongo_db,
                       data_bucket):
+    """
+    Airflow task to query mongoDB and load the result to a CSV and a JSON file in
+    the remote storage.
+    Args:
+        - mongo_conn: Name of the connection with which to connect to psql db
+        - mongo_coll: Name of the collection in mongo to query
+        - monog_db: Name of the database in mongodb to query
+        - data_bucket: remote storage bucket in which to save export
+    """
     dump_path = f"/{data_bucket}/dumps/mongo/"
     dump_csv_filename = "trip_dump.csv"
     dump_json_filename = "trip_dump.json"
@@ -229,7 +247,7 @@ def export_mongo_task(mongo_conn,
             os.remove(pth)
     mongo_hook = MongoHook(mongo_conn)
     mongo_db = Database(mongo_hook.get_conn(),
-                        mongo_db) 
+                        mongo_db)
     cursor = mongo_db[mongo_coll].find()
     df = pd.DataFrame(list(cursor))
     df.to_csv(tmp_csv_filepath)

@@ -1,3 +1,4 @@
+"Module containing the logic for the MongoDB Analysis API"
 import os
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
@@ -13,6 +14,10 @@ client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGO_CONN_STR"])
 db = client.chicago_taxi_trips_database
 
 class PyObjectId(ObjectId):
+    """
+    ObjectID Validator for validating BSON Objects
+    returned from mongoDB
+    """
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
@@ -26,8 +31,12 @@ class PyObjectId(ObjectId):
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
-    
+
 class TripModel(BaseModel):
+    """
+    Model for defining the output
+    schema of documents in the Trip collection
+    """
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     taxi_id: str = Field(...)
     trip_start_timestamp: datetime.datetime = Field(...)
@@ -58,12 +67,16 @@ class TripModel(BaseModel):
         json_encoders = {ObjectId: str}
 
 class CompanySummaryModel(BaseModel):
+    """
+    Model for defining the output
+    schema from the company summary API Call
+    """
     id: Optional[str] = Field(default_factory=str, alias="_id")
     total_trips: int = Field(...)
     total_fare: Optional[float] = Field(...)
     class Config:
         allow_population_by_field_name = True
-        
+
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str,
                          float: str}
@@ -77,11 +90,14 @@ class CompanySummaryModel(BaseModel):
 
 @mongoApp.get('/company_summary', response_model=List[CompanySummaryModel])
 async def return_trips_as_csv():
+    """
+    GET API method to return total number of trips and
+    total earned fair for all listed companies
+    """
     pipeline = [{"$group": 
-                        {"_id": "$company",
-                         "total_trips": {"$sum": 1},
-                         "total_fare": {"$sum": "$trip_total"}}
+                    {"_id": "$company",
+                     "total_trips": {"$sum": 1},
+                     "total_fare": {"$sum": "$trip_total"}}
                 }]
     companies = await db.chicago_taxi_trips_collection.aggregate(pipeline).to_list(1000)
     return companies
-

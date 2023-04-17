@@ -141,15 +141,15 @@ def format_taxi_df_to_records(raw_df: pd.DataFrame()):
     raw_df.rename(columns={'trip_id':'_id'}, inplace=True)
     type_maps = [('trip_miles', 'float64'), ('fare', 'float64'),
                  ('tips', 'float64'), ('tolls', 'float64'),
-                 ('extras','float64'), ('trip_total', 'float64'),
+                 ('extras', 'float64'), ('trip_total', 'float64'),
                  ('pickup_community_area', 'int64'),
                  ('dropoff_community_area', 'int64'),
                  ('pickup_centroid_latitude', 'float64'),
                  ('pickup_centroid_longitude', 'float64'),
                  ('dropoff_centroid_latitude', 'float64'),
                  ('dropoff_centroid_longitude', 'float64')]
-    for map in type_maps:
-        raw_df[map[0]] = raw_df[map[0]].astype(map[1], errors='ignore')
+    for t_map in type_maps:
+        raw_df[t_map[0]] = raw_df[t_map[0]].astype(t_map[1], errors='ignore')
     records = raw_df.to_dict(orient='records')
     for record in records:
         for col in point_cols:
@@ -157,30 +157,30 @@ def format_taxi_df_to_records(raw_df: pd.DataFrame()):
                 record[col]['coordinates'] = record[col]['coordinates'].tolist()
     return records
 
-def sq_ft_to_sq_km(x: float) -> float:
+def sq_ft_to_sq_km(sqft: float) -> float:
     """
     Function to convert an input value from ft^2 to km^2
     Args:
-        - x: Float value to convert
+        - sqft: Float value to convert
     Returns
-        - x_sqkm: x converted to Square Kilometers
+        - sqkm: sqft value converted to Square Kilometers
 
     """
     conv_factor = 0.000000092903
-    x_sqkm = x * conv_factor
-    return x_sqkm
+    sqkm = sqft * conv_factor
+    return sqkm
 
 def format_community_area_data(areas_df: pd.DataFrame) -> pd.DataFrame():
-    """ 
-    Function to retrieve and format Community Area data 
+    """
+    Function to retrieve and format Community Area data
     from the city of chicago
     """
-    areas_df =  areas_df[['AREA_NUMBE', 'COMMUNITY', 'SHAPE_AREA']]
+    areas_df = areas_df[['AREA_NUMBE', 'COMMUNITY', 'SHAPE_AREA']]
     areas_df.rename(columns={'AREA_NUMBE': 'community_area_id',
-                             'COMMUNITY':'community_area_name',
-                             'SHAPE_AREA':'community_area_size'},
+                             'COMMUNITY': 'community_area_name',
+                             'SHAPE_AREA': 'community_area_size'},
                     inplace=True)
-    areas_df['community_area_size'] = areas_df['community_area_size'].apply(lambda x: sq_ft_to_sq_km(x))
+    areas_df['community_area_size'] = areas_df['community_area_size']\
+                                            .apply(lambda x: sq_ft_to_sq_km(x))
     return areas_df
-
 
