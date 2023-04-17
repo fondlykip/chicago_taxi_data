@@ -1,4 +1,4 @@
-# chicago_taxi_data
+# Chicago Taxi Data Analytics Pipeline
 A small POC Project to extract data from the Chicago Taxi Trips public data set and load it into SQL and a NoSQL Databases, exposing results via an API.
 
 # Table of Contents
