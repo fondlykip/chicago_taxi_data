@@ -39,7 +39,7 @@ Code for the self service API can be found in `src/self_service_api/`:
 
 Unit tests for some of the functions in `src/pipelines/etl_functions.py` are available in `./test/unit/test_etl_functions.py`. To run the tests, execute the `run_tests.sh` file from the root of the repo like so:
 
-> ```sh ./run_tests.sh```
+```sh ./run_tests.sh```
 
 # Running the Solution
 To run the solution and return some results from the API we must:
@@ -51,14 +51,14 @@ To run the solution and return some results from the API we must:
 ## Start the Containers
 In order to start the containers for each service, with your terminal in the root directory of this repo, run the following command:
 
->```docker compose up```
+```docker compose up```
 
 Adding the `-d` flag to this command will limit the output generated and force docker to run in the background
 
 ## Log into Airflow UI
 With the containers started, we can log into Airflow via the Web UI, available on start up at the following URL:
 
->```localhost:8080```
+```localhost:8080```
 
 It may take a minute for the Web UI to be fully up and running. 
 
@@ -91,7 +91,7 @@ With the pipelines successfully run, we can now make a call to the API to get re
 
 The main URL of the API is
 
->```localhost:9001```
+```localhost:9001```
 
 Here, there are a few endpoints we can use:
 
@@ -118,4 +118,4 @@ This endpoint will return total fare and total number of trips per taxi company 
 
 When you are done running pipelines, the docker containers can be stopped by running the following command in the terminal;
 
->```docker compose down --volumes```
+```docker compose down --volumes```
