@@ -1,5 +1,5 @@
 # chicago_taxi_data
-A small POC Project to extract data from the Chicago Taxi Trips public data set and load it into a SQL and a NoSQL Database.
+A small POC Project to extract data from the Chicago Taxi Trips public data set and load it into SQL and a NoSQL Databases, exposing results via an API.
 
 ## Accessing the Repo
 As it is configured as private, to clone this repo you will need to share an ssh public key with me. I will then add this to the repo to allow access. 
