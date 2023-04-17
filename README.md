@@ -39,7 +39,9 @@ Code for the self service API can be found in `src/self_service_api/`:
 
 Unit tests for some of the functions in `src/pipelines/etl_functions.py` are available in `./test/unit/test_etl_functions.py`. To run the tests, execute the `run_tests.sh` file from the root of the repo like so:
 
-```sh ./run_tests.sh```
+```bash
+./run_tests.sh
+```
 
 # Running the Solution
 To run the solution and return some results from the API we must:
@@ -51,7 +53,9 @@ To run the solution and return some results from the API we must:
 ## Start the Containers
 In order to start the containers for each service, with your terminal in the root directory of this repo, run the following command:
 
-```docker compose up```
+```bash
+docker compose up
+```
 
 Adding the `-d` flag to this command will limit the output generated and force docker to run in the background
 
@@ -118,4 +122,6 @@ This endpoint will return total fare and total number of trips per taxi company 
 
 When you are done running pipelines, the docker containers can be stopped by running the following command in the terminal;
 
-```docker compose down --volumes```
+```bash
+docker compose down --volumes
+```
