@@ -8,12 +8,12 @@ This project implements the following Architecure:
 The services for each aspect of the diagram above are all built and managed by the `docker-compose.yaml` file found in the root of the repository.
 
 In this file we define the following containers:
- - airflow-meta-db: Host for Airflow's PostgreSQL backend database
- - airflow_scheduler: Host for Airflow's Scheduler
- - airflow_webserver: Host for Airflow's Webserver
- - postgres_db: Host for the PSQL Database Service
- - mongo_db: Host for the Mongo Database Service
- - app_server: Host for the REST API
+ - `airflow_meta_db`: Host for Airflow's PostgreSQL backend database
+ - `airflow_scheduler`: Host for Airflow's Scheduler
+ - `airflow_webserver`: Host for Airflow's Webserver
+ - `postgres_db`: Host for the PSQL Database Service
+ - `mongo_db`: Host for the Mongo Database Service
+ - `app_server`: Host for the REST API
 
 We also define 2 Docker managed volumes, one for airflow's logs, and one for the 'remote-storage' volume, which for the sake of this exercise will act as a proxy to cloud storage solutions.
 
