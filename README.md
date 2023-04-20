@@ -17,7 +17,7 @@ As it is configured to be private, to clone this repo you will need to share an 
 
 Instructions on how to create new keys can be found [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 
-With a new key created, copy the contents of the `<key-name>.pub` file to a text file and send it via email to liam.j.campbell@hotmail.co.uk
+With a new key created, copy the contents of the `<key-name>.pub` file to a text file and share it with the repo owner
 
 # Project Overview <a name="overview"></a>
 This project implements the following Architecure:
